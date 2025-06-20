@@ -1,0 +1,432 @@
+/* Основные стили для страницы */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    background-size: cover;
+    background-position: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+    background-color: #343a40;
+    color: #ffffff;
+}
+
+/* Заголовок и навигация */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 1px;
+    height: 13%;
+    width: 100%;
+    background-color: #dc3545;
+    color: white;
+    padding: 0 40px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+header img {
+    max-height: 90%;
+    width: auto;
+    margin-left: 20px;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    margin-right: 90px;
+}
+
+nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: background-color 0.3s;
+    margin: 0 80px;
+    border-radius: 6px;
+    position: relative;
+    box-shadow: rgb(254, 28, 68);
+    margin-bottom: 20px;
+}
+
+nav a.active, nav a:hover {
+    background-color: #ffc107;
+}
+
+nav a::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: transparent;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 1;
+    pointer-events: none;
+}
+
+/* Иконки для навигации */
+nav a.news {
+    background-image: url(../style/iconNews.png);
+}
+nav a.team {
+    background-image: url(../style/iconTeam.png);
+}
+nav a.media {
+    background-image: url(../style/iconMedia.png);
+}
+nav a.iconMeasure {
+    background-image: url(../style/iconMeasure.png);
+}
+nav a.contact {
+    background-image: url(../style/iconContact.png);
+}
+
+/* Стиль для иконки аккаунта */
+.account-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    background-image: url(../style/iconAccount.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 10%;
+    box-shadow: rgb(56, 0, 56);
+    padding: 10px;
+    height: 25px;
+    width: 25px;
+}
+
+/* Общие стили для текста */
+p {
+    font-family: "Inter Tight", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: bold;
+    color: #333333;
+}
+body.dark-mode p {
+    color: #ffffff;
+}
+
+/* Стили для основного контейнера */
+.main-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 20px;
+}
+
+/* Стили для профиля */
+.profile-section {
+    background-color: rgba(255, 255, 255, 0.8);
+    margin: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: calc(100% - 40px);
+    max-width: 800px;
+}
+
+.profile-section h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 24px;
+}
+
+.profile-picture {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.profile-picture img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+.profile-picture-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.profile-picture-actions button {
+    padding: 8px 16px;
+    background-color: #5a0888;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.profile-picture-actions button:hover {
+    background-color: #4a0668;
+}
+
+.profile-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.profile-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex: 1 1 30%;
+    min-width: 200px;
+}
+
+.profile-info-item {
+    flex: 1;
+    margin: 0 10px;
+    text-align: center;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.profile-info-item label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.profile-info-item p {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+/* Стили для кнопки выхода */
+.logoutButton {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+}
+
+.logoutButton:hover {
+    background-color: #ffc107;
+}
+
+/* Стили для боковой панели */
+.sidebar {
+    width: 200px;
+    padding: 10px;
+    background-color: rgba(84, 7, 125, 0.7);
+    border-radius: 8px;
+    margin-right: 10px;
+    height: auto;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar button {
+    background-color: #5a0888;
+    color: #fff;
+    border: none;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 90%;
+    margin: 10px auto;
+    font-size: 17px;
+    font-weight: bold;
+    background: linear-gradient(#5a0888, #4a0668);
+}
+
+.sidebar button:hover {
+    background-color: #4a0668;
+}
+
+/* Стили для контента */
+.content {
+    flex: 1;
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-right: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 3px solid #54077db9;
+    border-radius: 8px;
+    display: none;
+}
+
+.content.active {
+    display: block;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 800px; /* Увеличиваем максимальную ширину формы */
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode .form-container {
+    background-color: #34495e;
+    color: #ecf0f1;
+}
+
+.form-container h2 {
+    text-align: center;
+    color: #5a0888;
+    margin-bottom: 20px;
+    width: 100%;
+    font-size: 28px;
+}
+
+body.dark-mode .form-container h2 {
+    color: #ecf0f1;
+}
+
+/* Стили для групп формы */
+.form-group {
+    margin-bottom: 20px;
+    width: 100%; /* Делаем группы формы на всю ширину контейнера */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #5a0888;
+}
+
+body.dark-mode .form-group label {
+    color: #ecf0f1;
+}
+
+/* Стили для элементов ввода */
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group input[type="file"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea {
+    background-color: #3d566e;
+    color: #ecf0f1;
+    border-color: #4a6b84;
+}
+
+/* Стили для кнопок */
+.form-group input[type="submit"],
+button[type="submit"] {
+    background-color: #5a0888;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.form-group input[type="submit"]:hover,
+button[type="submit"]:hover {
+    background-color: #4a0668;
+}
+
+/* Стили для радио-кнопок */
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.radio-group label {
+    margin-left: 5px;
+}
+
+/* Стили для кнопки генерации пароля */
+#generatePasswordButton {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+#generatePasswordButton:hover {
+    background-color: #218838;
+}
+
+/* Стили для контейнеров с датой и временем */
+.date-time-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.date-time-container > div {
+    flex: 1;
+    min-width: 200px;
+}

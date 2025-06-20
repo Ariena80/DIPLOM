@@ -1,0 +1,177 @@
+/* Основные стили для адаптивного дизайна */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Стили для адаптивного заголовка */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+nav a {
+    margin: 0 10px;
+}
+
+/* Стили для основного контента */
+main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Стили для адаптивного подвала */
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Стили для адаптивных элементов */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
+}
+
+.item {
+    flex: 1 1 100%;
+    margin: 10px;
+}
+
+/* Медиа-запросы для различных устройств */
+@media (min-width: 600px) {
+    .item {
+        flex: 1 1 45%;
+    }
+}
+
+@media (min-width: 900px) {
+    .item {
+        flex: 1 1 30%;
+    }
+
+    nav {
+        margin-right: 90px;
+    }
+
+    nav a {
+        margin: 0 80px;
+    }
+}
+
+/* Стили для адаптивных форм */
+form {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+form label, form input, form textarea, form button {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Стили для адаптивных таблиц */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+/* Стили для адаптивных изображений */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Стили для адаптивных вкладок */
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    background-color: #dc3545;
+    color: white;
+    cursor: pointer;
+}
+
+.tab-button.active {
+    background-color: #ffc107;
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Стили для темной темы */
+body.dark-mode {
+    background-color: #343a40;
+    color: #ffffff;
+}
+
+body.dark-mode header {
+    background-color: #212529;
+}
+
+body.dark-mode footer {
+    background-color: #212529;
+}
+
+body.dark-mode form {
+    background-color: #495057;
+    color: #ffffff;
+}
+
+/* Стили для кнопки переключения темы */
+.theme-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.theme-toggle img {
+    width: 30px;
+    height: 30px;
+}

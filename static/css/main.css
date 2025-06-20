@@ -1,0 +1,289 @@
+/* Основные стили страницы */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    background-size: cover;
+    background-position: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+    background-color: #343a40;
+    color: #ffffff;
+}
+
+/* Заголовок и навигация */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 1px;
+    height: 13%;
+    width: 100%;
+    background-color: #dc3545;
+    color: white;
+    padding: 0 40px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+header img {
+    max-height: 90%;
+    width: auto;
+    margin-left: 20px;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    margin-right: 90px;
+}
+
+nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: background-color 0.3s;
+    margin: 0 80px;
+    border-radius: 6px;
+    position: relative;
+    box-shadow: rgb(254, 28, 68);
+    margin-bottom: 20px;
+}
+
+nav a.active, nav a:hover {
+    background-color: #ffc107;
+}
+
+nav a::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: transparent;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 1;
+    pointer-events: none;
+}
+
+/* Иконки для навигации */
+nav a.news {
+    background-image: url(../style/iconNews.png);
+}
+nav a.team {
+    background-image: url(../style/iconTeam.png);
+}
+nav a.media {
+    background-image: url(../style/iconMedia.png);
+}
+nav a.iconMeasure {
+    background-image: url(../style/iconMeasure.png);
+}
+nav a.contact {
+    background-image: url(../style/iconContact.png);
+}
+
+/* Стиль для иконки аккаунта */
+.account-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    background-image: url(../style/iconAccount.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 10%;
+    box-shadow: rgb(56, 0, 56);
+    padding: 10px;
+    height: 25px;
+    width: 25px;
+}
+
+/* Общие стили для текста */
+p {
+    font-family: "Inter Tight", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: bold;
+    color: #333333;
+}
+body.dark-mode p {
+    color: #ffffff;
+}
+
+/* Стиль для контейнера входа */
+.login-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 60px;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    align-items: center;
+    width: 450px;
+    margin: 160px auto;
+    height: 450px;
+    border: 2px solid #dc3545;
+    transition: background-color 0.3s, color 0.3s;
+}
+body.dark-mode .login-container {
+    background-color: #495057;
+    color: #ffffff;
+}
+.login-container form {
+    margin-top: 80px;
+    margin-bottom: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.login-container label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333333;
+    font-size: 30px;
+}
+body.dark-mode .login-container label {
+    color: #ffffff;
+}
+.login-container input {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #dc3545;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 50px;
+    font-size: 30px;
+    background-color: #ffffff;
+    color: #333333;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+body.dark-mode .login-container input {
+    background-color: #343a40;
+    color: #ffffff;
+}
+.login-container button {
+    background-color: #dc3545;
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 20px;
+    font-size: 30px;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background-color 0.3s;
+    width: 300px;
+}
+.login-container button:hover {
+    background-color: #ffc107;
+}
+
+/* Стиль для всплывающих сообщений */
+.flashes {
+    list-style-type: none;
+    padding: 0;
+    color: #333333;
+    font-weight: bold;
+}
+body.dark-mode .flashes {
+    color: #ffffff;
+}
+
+/* Основной контент */
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Подвал сайта */
+footer {
+    text-align: center;
+    background-color: #dc3545;
+    color: white;
+    padding: 10px 0;
+    height: 3%;
+}
+
+/* Кнопка переключения темы */
+.theme-toggle {
+    background: none; 
+    border: none; 
+    padding: 0; 
+    cursor: pointer; 
+    position: relative; 
+    left: -150px; 
+}
+.theme-toggle img {
+    width: 100px; 
+    height: 100px; 
+}
+.theme-toggle:focus,
+.theme-toggle:hover {
+    outline: none;
+    box-shadow: none;
+}
+
+/* --- Добавленные стили для блока "ВЫПУСКНАЯ КВАЛИФИКАЦИОННАЯ РАБОТА" --- */
+
+.project-title-container {
+    background-color: #6f42c1; /* Фиолетовый из бренд-бука */
+    padding: 30px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    text-align: center;
+    margin: 50px auto;
+    max-width: 90%;
+}
+
+.project-title {
+    font-family: "Arial Rounded MT Bold", "Inter Tight", sans-serif;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff; /* Белый цвет текста */
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+.project-subtitle {
+    font-family: "Arial", sans-serif;
+    font-size: 20px;
+    font-weight: normal;
+    color: #d4f56a; /* Кислотно-зеленый для акцента */
+    margin-top: 10px;
+}
+
+.organization-name {
+    font-family: "Arial Rounded MT Bold", "Inter Tight", sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-top: 20px;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Эффект при наведении на контейнер */
+.project-title-container:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transform: translateY(-2px);
+    transition: all 0.3s ease-in-out;
+}
