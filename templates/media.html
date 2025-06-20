@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Красные волки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/animation.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/dark theme.js') }}" defer></script>
+    <style>
+        .subscribe-section {
+            margin: 30px 20px;
+            padding-left: 65%;
+        }
+
+        .subscribe {
+            text-align: center;
+            align-items: center;
+            font-size: 27px;
+            margin-left: 20px;
+        }
+
+        .group_vk {
+            color: white;
+            font-weight: bold;
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+            align-items: center;
+            font-size: 30px;
+            text-decoration: rgb(93, 2, 129);
+        }
+
+        .rounded-rectangle {
+            width: 550px;
+            height: 100px;
+            background-color: #5a0888;
+            color: #ffffff;
+            border-radius: 3%;
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            margin: 30px 20px;
+            padding: 5px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .media-container {
+            justify-content: baseline;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-left: 30px;
+            padding: 0%;
+        }
+
+        .media-link {
+            backface-visibility: hidden;
+            box-sizing: border-box;
+            background-color: #59088885;
+            border: 6px solid transparent;
+            border-radius: 6%;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            font-family: "Open Sans", Arial, sans-serif;
+            font-size: 16px;
+            font-style: normal;
+            height: 40px;
+            line-height: 30px;
+            list-style: none;
+            margin: 10px;
+            padding: 0;
+            position: relative;
+            text-align: center;
+            align-items: center;
+            text-size-adjust: 100%;
+            text-decoration: none;
+            white-space: nowrap;
+            width: 6%;
+        }
+
+        .media-article {
+            display: flex;
+            flex-direction: row;
+            margin: 20px 50px;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+
+        .media_card:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .media_card {
+            width: 400px;
+            height: 400px;
+            background-color: #6b2376;
+            color: #ffffff;
+            border: 6px solid #5a0888;
+            border-radius: 6%;
+            margin: 55px;
+            display: flex;
+            justify-content: center;
+            font-size: 13px;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
+        <nav>
+            <a href="{{ url_for('home') }}" class="news" data-text="Новости"></a>
+            <a href="{{ url_for('team') }}" class="team" data-text="Команды"></a>
+            <a href="{{ url_for('media') }}" class="media" data-text="Медиа"></a>
+            <a href="{{ url_for('measure') }}" class="iconMeasure" data-text="Мероприятия"></a>
+            <a href="{{ url_for('contact') }}" class="contact" data-text="О нас"></a>
+            <a href="{{ url_for('login') }}" class="account-link" data-text="Профиль"></a>
+        </nav>
+       
+    </header>
+
+    <section class="subscribe-section">
+        <div class="rounded-rectangle">
+            <span class="subscribe">Подписывайтесь на наше сообщество <a href="https://vk.com/sskredwolves" class="group_vk">
+                <cite>&laquo;Красные волки&raquo;</cite></a> ! 🚀</span>
+        </div>
+    </section>
+
+    <article class="media-article">
+        <div class="media_card">
+            <h2>ФОТО БАСКЕТБОЛ</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО ВОЛЕЙБОЛ</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО ШАХМАТЫ</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО ШАШКИ</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО ФУТБОЛ</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО ТЕННИС</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО БАДМИНТОН</h2>
+        </div>
+        <div class="media_card">
+            <h2>ФОТО СКИПИНГ</h2>
+        </div>
+    </article>
+
+    <div id="modal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modal-image">
+        <div id="caption"></div>
+    </div>
+
+    <footer>
+        <p>&COPY;Arieshka, 2024.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.media_card');
+            const modal = document.getElementById('modal');
+            const modalImg = document.getElementById('modal-image');
+            const captionText = document.getElementById('caption');
+            const closeBtn = document.querySelector('.close');
+
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const sport = card.querySelector('h2').textContent.replace('ФОТО ', '');
+                    const imageUrl = `path_to_your_images/${sport.toLowerCase()}.jpg`; // Убедитесь, что путь к изображениям корректен
+                    modal.style.display = 'block';
+                    modalImg.src = imageUrl;
+                    captionText.innerHTML = sport;
+                });
+            });
+
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

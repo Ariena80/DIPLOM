@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/account-styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+ <style>
+ .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    overflow: auto;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+#cropCanvas {
+    border-radius: 50%;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.slider-container {
+    margin: 20px 0;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+    </style>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
+        <nav class="navigation">
+            <a href="{{ url_for('home') }}" class="news" data-text="Новости"></a>
+            <a href="{{ url_for('team') }}" class="team" data-text="Команды"></a>
+            <a href="{{ url_for('media') }}" class="media" data-text="Медиа"></a>
+            <a href="{{ url_for('measure') }}" class="iconMeasure" data-text="Мероприятия"></a>
+            <a href="{{ url_for('contact') }}" class="contact" data-text="О нас"></a>
+            <a href="{{ url_for('login') }}" class="account-link" data-text="Профиль"></a>
+        </nav>
+    </header>
+    <div class="main-container">
+        <div class="profile-section">
+            <h2>Мой профиль</h2>
+            <div class="profile-picture">
+                <img src="{{ url_for('static', filename='style/icon-placeholder.png') }}" alt="Профиль" id="previewImage">
+                <div class="profile-picture-actions">
+                    <button onclick="document.getElementById('profilePictureInput').click()">Загрузить фото</button>
+                    <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+            <div class="profile-info">
+                <div class="profile-info-row">
+                    <div class="profile-info-item">
+                        <label>Фамилия:</label>
+                        <p id="surname"></p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Имя:</label>
+                        <p id="first_name"></p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Отчество:</label>
+                        <p id="middle_name"></p>
+                    </div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="profile-info-item">
+                        <label>Должность:</label>
+                        <p id="position"></p>
+                    </div>
+                </div>
+                <button id="logoutButton" class="logoutButton">Выйти</button>
+            </div>
+        </div>
+        <div class="sidebar">
+            <button data-action="showTeamForm">Добавить команду</button>
+            <button data-action="showPhysOrgForm">Добавить физорга</button>
+            <button data-action="showMediaForm">Добавить фото</button>
+            <button data-action="showEventForm">Добавить мероприятие</button>
+            <button data-action="showEditTrainingScheduleForm">Редактировать расписание тренировок</button>
+            <button data-action="showEditStatisticForm">Редактировать статистику</button>
+            <button data-action="showNewsForm">Добавить новость</button>
+            <button data-action="showAwardsForm">Добавить награду</button>
+            <button data-action="showApproveRequests">Одобрить заявку</button>
+        </div>
+
+         <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeUploadModal()">&times;</span>
+                <h2>Загрузить фото</h2>
+                <canvas id="cropCanvas"></canvas>
+                <input type="range" id="zoomRange" min="1" max="3" step="0.1" value="1">
+                <button id="savePic">Сохранить</button>
+            </div>
+        </div>
+
+        <div id="profileForm" class="content">
+            <h2>Мой профиль</h2>
+            <div class="profile-section">
+                <div class="profile-picture">
+                    <img src="{{ url_for('static', filename='style/icon-placeholder.png') }}" alt="Предварительный просмотр" id="previewImage">
+                    <form action="/api/upload_profile_picture" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="profile_picture" accept="image/*">
+                        <button type="submit">Загрузить фото профиля</button>
+                    </form>
+                </div>
+                <div class="profile-info">
+                    <div class="form-group">
+                        <div class="info-row">
+                            <div>
+                                <h3>Фамилия</h3>
+                                <label id="surname">Фамилия:</label>
+                                <p id="surname"></p>
+                            </div>
+                            <div>
+                                <h3>Имя</h3>
+                                <label id="first_name">Имя:</label>
+                                <p id="first_name"></p>
+                            </div>
+                            <div>
+                                <h3>Отчество</h3>
+                                <label id="middle_name">Отчество:</label>
+                                <p id="middle_name"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mediaForm" class="content" style="display: none;">
+            <h2>Добавление фото</h2>
+            <form action="upload.php" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Заголовок:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="course">Выбор курса:</label>
+                    <select id="course" name="course" required>
+                        <option value="1">1 курс</option>
+                        <option value="2">2 курс</option>
+                        <option value="3">3 курс</option>
+                        <option value="4">4 курс</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sport_type">Выбор вида спорта:</label>
+                    <select id="sport_type" name="sport_type" required onchange="updateMediaForm()">
+                        <option value="football">Футбол</option>
+                        <option value="basketball">Баскетбол 3х3</option>
+                        <option value="volleyball">Волейбол</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="media_files">Файлы:</label>
+                    <input type="file" id="media_files" name="media_files[]" multiple required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Загрузить">
+                </div>
+            </form>
+        </div>
+
+        <div id="teamForm" class="content" style="display: none;">
+            <h2>Добавление команды</h2>
+            <form action="add_team.php" method="POST">
+                <div class="form-group">
+                    <label for="team_name">Название команды:</label>
+                    <input type="text" id="team_name" name="team_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="course">Выбор курса:</label>
+                    <select id="course" name="course" required>
+                        <option value="1">1 курс</option>
+                        <option value="2">2 курс</option>
+                        <option value="3">3 курс</option>
+                        <option value="4">4 курс</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sport_type">Выбор вида спорта:</label>
+                    <select id="sport_type" name="sport_type" required onchange="updateTeamMembers()">
+                        <option value="football">Футбол</option>
+                        <option value="basketball">Баскетбол 3х3</option>
+                        <option value="volleyball">Волейбол</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="gender">Пол участников:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="male" name="gender" value="male" required>
+                        <label for="male">Мужская</label>
+                        <input type="radio" id="female" name="gender" value="female" required>
+                        <label for="female">Женская</label>
+                    </div>
+                </div>
+                <div class="form-group" id="team_members_container">
+                        <!-- Здесь будут динамически добавляться поля для игроков -->
+                </div>
+                <div class="form-group">
+                    <label for="reserve_member">Запасной игрок:</label>
+                    <input type="text" id="reserve_member" name="reserve_member" placeholder="Запасной игрок">
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Добавить команду">
+                </div>
+            </form>
+        </div>
+
+        <div id="physOrgForm" class="content" style="display: none;">
+            <h2>Добавление физорга</h2>
+    <form action="/api/add_physorg" method="POST">
+        <div class="form-container">
+            <div class="form-group">
+                <label for="surname">Фамилия:</label>
+                <input type="text" id="surname" name="surname" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Имя:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="patronymic">Отчество:</label>
+                <input type="text" id="patronymic" name="patronymic" required>
+            </div>
+            <div class="form-group">
+                <label for="gender">Пол:</label>
+                <div class="radio-group">
+                    <input type="radio" id="male" name="gender" value="male" required>
+                    <label for="male">Мужской</label>
+                    <input type="radio" id="female" name="gender" value="female" required>
+                    <label for="female">Женский</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="course">Курс:</label>
+                <select id="course" name="course" required>
+                    <option value="1">1 курс</option>
+                    <option value="2">2 курс</option>
+                    <option value="3">3 курс</option>
+                    <option value="4">4 курс</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="group">Группа:</label>
+                <select id="group" name="group" required>
+                    <option value="ИСП-П">ИСП-П</option>
+                    <option value="ИСП-Р">ИСП-Р</option>
+                    <option value="ИСП-А">ИСП-А</option>
+                    <option value="СИС">СИС</option>
+                    <option value="ОИБ">ОИБ</option>
+                    <option value="ИСП-ИС">ИСП-ИС</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="login">Логин:</label>
+                <input type="text" id="login" name="login" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="text" id="password" name="password" required placeholder="Введите или сгенерируйте пароль">
+                <button type="button" id="generatePasswordButton" onclick="generatePassword()">Сгенерировать пароль</button>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Добавить физорга">
+            </div>
+        </div>
+    </form>
+</div>
+
+        <div id="eventForm" class="content" style="display: none;">
+            <h2>Добавление мероприятия</h2>
+            <form action="add_event.php" method="POST">
+                <div class="form-group">
+                    <label for="event_type">Тип мероприятия:</label>
+                    <select id="event_type" name="event_type" required onchange="toggleEventTypeFields()">
+                        <option value="sports">Спортивное</option>
+                        <option value="organizational">Организационное</option>
+                    </select>
+                </div>
+                <div id="sportsFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="sport_type">Вид спорта:</label>
+                        <select id="sport_type" name="sport_type" required>
+                            <option value="football">Футбол</option>
+                            <option value="basketball">Баскетбол 3х3</option>
+                            <option value="volleyball">Волейбол</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="gender">Пол участников:</label>
+                        <div class="radio-group">
+                            <input type="radio" id="male" name="gender" value="male" required>
+                            <label for="male">Мужской</label>
+                            <input type="radio" id="female" name="gender" value="female" required>
+                            <label for="female">Женский</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="commonFields">
+                    <div class="form-group">
+                        <label for="event_name">Название мероприятия:</label>
+                        <input type="text" id="event_name" name="event_name" required>
+                    </div>
+                    <div class="date-time-container">
+                        <div class="form-group">
+                            <label for="event_date">Дата мероприятия:</label>
+                            <input type="date" id="event_date" name="event_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event_time">Время мероприятия:</label>
+                            <input type="time" id="event_time" name="event_time" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Место проведения:</label>
+                        <select id="location" name="location" required>
+                            <option value="ПЕРВОМАЙСКАЯ 42, КОРПУС 1">Первомайская 42, корпус 1</option>
+                            <option value="СОВЕТСКИЙ ПР. 137, 2 КОРПУС">Советский проспект 137, корпус 2</option>
+                            <option value="ДРУГОЕ МЕСТО">Другое место</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Добавить мероприятие">
+                </div>
+            </form>
+        </div>
+
+        <div id="editTrainingScheduleForm" class="content" style="display: none;">
+            <h2>Редактирование расписания тренировок</h2>
+            <form action="edit_schedule.php" method="POST">
+                <div class="form-group">
+                    <label for="sport_type_schedule">Вид спорта:</label>
+                    <select id="sport_type_schedule" name="sport_type_schedule" required>
+                        <option value="football">Футбол</option>
+                        <option value="basketball">Баскетбол</option>
+                        <option value="volleyball">Волейбол</option>
+                    </select>
+                </div>
+                <div class="date-time-container">
+                    <div class="form-group">
+                        <label for="training_date">Дата:</label>
+                        <input type="date" id="training_date" name="training_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="training_time">Время:</label>
+                        <input type="time" id="training_time" name="training_time" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="coach_name">ФИО тренера:</label>
+                    <input type="text" id="coach_name" name="coach_name" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Редактировать расписание">
+                </div>
+            </form>
+        </div>
+
+        <div id="editStatisticForm" class="content" style="display: none;">
+            <h2>Редактирование статистики</h2>
+            <form action="edit_statistic.php" method="POST">
+                <div class="form-group">
+                    <label for="sport_type_statistic">Вид спорта:</label>
+                    <select id="sport_type_statistic" name="sport_type_statistic" required>
+                        <option value="football">Футбол</option>
+                        <option value="basketball">Баскетбол</option>
+                        <option value="volleyball">Волейбол</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="team_name_statistic">Название команды:</label>
+                    <select id="team_name_statistic" name="team_name_statistic" required>
+                        <option value="team1">Команда 1</option>
+                        <option value="team2">Команда 2</option>
+                        <option value="team3">Команда 3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="player_name">Игрок:</label>
+                    <select id="player_name" name="player_name" required>
+                        <option value="player1">Игрок 1</option>
+                        <option value="player2">Игрок 2</option>
+                        <option value="player3">Игрок 3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statistic_type">Тип статистики:</label>
+                    <select id="statistic_type" name="statistic_type" required>
+                        <option value="goals">Голы</option>
+                        <option value="assists">Передачи</option>
+                        <option value="points">Очки</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statistic_value">Значение:</label>
+                    <input type="number" id="statistic_value" name="statistic_value" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Сохранить изменения">
+                </div>
+            </form>
+        </div>
+
+        <div id="newsForm" class="content" style="display: none;">
+            <h2>Добавление новостей</h2>
+            <form id="addNewsForm" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Заголовок:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">Содержание:</label>
+                    <textarea id="content" name="content" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image">Фотография:</label>
+                    <input type="file" id="image" name="image">
+                </div>
+                <div class="form-group">
+                    <button type="submit">Опубликовать новость</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="awardsForm" class="content" style="display: none;">
+            <h2>Добавление наград</h2>
+            <form action="add_award.php" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="award_name">Название награды:</label>
+                    <input type="text" id="award_name" name="award_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="recipient">Получатель награды:</label>
+                    <input type="text" id="recipient" name="recipient" required>
+                </div>
+                <div class="form-group">
+                    <label for="award_image">Фото:</label>
+                    <input type="file" id="award_image" name="award_image" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Добавить награду">
+                </div>
+            </form>
+        </div>
+
+        <div id="approveRequestsForm" class="content" style="display: none;">
+            <h2>Одобрение заявок</h2>
+            <form>
+                <div class="form-group">
+                    <label for="request_id">ID заявки:</label>
+                    <input type="text" id="request_id" name="request_id" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Одобрить заявку">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    const contentArea = document.getElementById('form-container');
+
+    function showForm(formId) {
+        const forms = document.querySelectorAll('.content');
+        forms.forEach(form => {
+            form.style.display = 'none';
+        });
+        const formToShow = document.getElementById(formId);
+        if (formToShow) {
+            formToShow.style.display = 'block';
+        }
+    }
+
+    document.querySelectorAll('.sidebar button').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            let formId;
+            if (action === 'showTeamForm') formId = 'teamForm';
+            else if (action === 'showPhysOrgForm') formId = 'physOrgForm';
+            else if (action === 'showMediaForm') formId = 'mediaForm';
+            else if (action === 'showEventForm') formId = 'eventForm';
+            else if (action === 'showEditTrainingScheduleForm') formId = 'editTrainingScheduleForm';
+            else if (action === 'showEditStatisticForm') formId = 'editStatisticForm';
+            else if (action === 'showNewsForm') formId = 'newsForm';
+            else if (action === 'showAwardsForm') formId = 'awardsForm';
+            else if (action === 'showApproveRequests') formId = 'approveRequestsForm';
+            showForm(formId);
+        });
+    });
+
+    document.getElementById('logoutButton').addEventListener('click', function() {
+        fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = 'login.html';
+            } else {
+                alert('Ошибка при выходе');
+            }
+        })
+        .catch(error => console.error('Error logging out:', error));
+    });
+
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const action = form.getAttribute('action');
+
+            fetch(action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Данные успешно сохранены');
+                    form.reset();
+                } else {
+                    alert('Ошибка при сохранении данных');
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
+        });
+    });
+
+    fetch('/api/user_data')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('surname').textContent = data.surname;
+            document.getElementById('first_name').textContent = data.name;
+            document.getElementById('middle_name').textContent = data.patronymic;
+
+            // Отображение должности на основе роли
+            const roleId = data.role;
+            let position = '';
+            if (roleId === 1) {
+                position = 'Администратор';
+            } else if (roleId === 2) {
+                position = 'Физорг';
+            }
+            document.getElementById('position').textContent = position;
+        })
+        .catch(error => console.error('Error fetching user data:', error));
+
+    document.getElementById('profilePictureInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const cropCanvas = document.getElementById('cropCanvas');
+                    const ctx = cropCanvas.getContext('2d');
+                    cropCanvas.width = img.width;
+                    cropCanvas.height = img.height;
+                    ctx.drawImage(img, 0, 0, img.width, img.height);
+                    document.getElementById('uploadModal').style.display = 'block';
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function closeUploadModal() {
+        document.getElementById('uploadModal').style.display = 'none';
+    }
+
+    document.getElementById('savePic').addEventListener('click', function() {
+        const cropCanvas = document.getElementById('cropCanvas');
+        const fileInput = document.getElementById('profilePictureInput');
+        const formData = new FormData();
+
+        if (fileInput.files.length > 0) {
+            formData.append('profile_picture', fileInput.files[0]);
+
+            fetch('/api/profile_picture', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Фото профиля успешно загружено');
+                    // Обновляем изображение профиля на странице
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('previewImage').src = e.target.result;
+                        localStorage.setItem('profileImage', e.target.result);
+                    }
+                    reader.readAsDataURL(fileInput.files[0]);
+                    closeUploadModal();
+                } else {
+                    alert('Ошибка при загрузке фото: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
+        } else {
+            alert('Пожалуйста, выберите файл для загрузки.');
+        }
+    });
+
+    // Загрузка сохраненного изображения при загрузке страницы
+    const savedImage = localStorage.getItem('profileImage');
+    if (savedImage) {
+        document.getElementById('previewImage').src = savedImage;
+    }
+
+    const inactivityDuration = 3600000;
+    let inactivityTimeout;
+
+    function startInactivityTimer() {
+        inactivityTimeout = setTimeout(logoutDueToInactivity, inactivityDuration);
+    }
+
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimeout);
+        startInactivityTimer();
+    }
+
+    function logoutDueToInactivity() {
+        fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = 'login.html';
+            } else {
+                alert('Ошибка при автоматическом выходе');
+            }
+        })
+        .catch(error => console.error('Error logging out due to inactivity:', error));
+    }
+
+    document.addEventListener('mousemove', resetInactivityTimer);
+    document.addEventListener('keypress', resetInactivityTimer);
+    document.addEventListener('click', resetInactivityTimer);
+
+    startInactivityTimer();
+
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const body = document.body;
+
+    themeToggle.addEventListener('click', function() {
+        body.classList.toggle('dark-mode');
+        if (body.classList.contains('dark-mode')) {
+            themeIcon.src = 'static/style/Dark Mode.png';
+        } else {
+            themeIcon.src = 'static/style/White Mode.png';
+        }
+    });
+});
+
+function updateTeamMembers() {
+    const sportType = document.querySelector("#teamForm select[name='sport_type']").value;
+    const membersContainer = document.getElementById("team_members_container");
+
+    if (membersContainer) {
+        membersContainer.innerHTML = '<label for="team_members">Игроки команды:</label><br>';
+
+        let memberCount;
+        if (sportType === "football") {
+            memberCount = 5;
+        } else if (sportType === "basketball") {
+            memberCount = 3;
+        } else if (sportType === "volleyball") {
+            memberCount = 6;
+        } else {
+            memberCount = 1;
+        }
+
+        for (let i = 1; i <= memberCount; i++) {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.name = "team_members[]";
+            input.placeholder = `Игрок команды ${i}`;
+            input.required = true;
+            membersContainer.appendChild(input);
+            membersContainer.appendChild(document.createElement("br"));
+        }
+    }
+}
+
+document.querySelector("#teamForm select[name='sport_type']").addEventListener('change', updateTeamMembers);
+
+function generatePassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    let password = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+        password += charset.charAt(Math.floor(Math.random() * n));
+    }
+    document.getElementById('password').value = password;
+}
+
+    </script>
+</body>
+</html>

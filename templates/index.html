@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Красные волки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #5a0888;
+            --secondary-color: #6b2376;
+            --text-color: #ffffff;
+            --calendar-text-color: #000000;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --modal-background: #ffffff;
+        }
+
+        .dark-theme {
+            --primary-color: #bb86fc;
+            --secondary-color: #3700b3;
+            --background-color: #121212;
+            --card-background: #1e1e1e;
+            --modal-background: #1e1e1e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            margin-bottom: 80px;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .left-content {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .right-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .news-section {
+            width: 90%;
+            margin-top: 5px;
+        }
+
+        .news-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .news_card {
+            width: 450px;
+            height: 450px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 6px solid var(--primary-color);
+            border-radius: 10px;
+            margin: 5px 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            font-size: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+            transform-origin: center;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+        }
+
+        .news_card h2 {
+            margin-bottom: 20px;
+            color: var(--text-color);
+            width: 95%;
+            text-align: center;
+            font-size: 24px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            margin-right: 30px;
+        }
+
+        .news_card p {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-color);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 5;
+            -webkit-box-orient: vertical;
+            line-clamp: 5;
+            box-orient: vertical;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        .news_card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            object-fit: cover;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--modal-background);
+            padding: 20px;
+            width: 80%;
+            max-width: 900px;
+            border-radius: 20px;
+            display: flex;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            border: 10px solid var(--primary-color);
+        }
+
+        .modal-image {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .modal-image img {
+            width: 100%;
+            border-radius: 15px;
+            border: 3px solid var(--primary-color);
+        }
+
+        .modal-text {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .modal-text h2 {
+            color: var(--primary-color);
+            font-family: 'Georgia', serif;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #3700b3;
+        }
+
+        .modal-text p {
+            font-size: 16px;
+            color: var(--text-color);
+            line-height: 1.6;
+            color: #000000;
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            color: var(--primary-color);
+        }
+
+        .calendar {
+            width: 400px;
+            background-color: var(--card-background);
+            color: var(--text-color);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .calendar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .calendar-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-nav select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--card-background);
+            color: var(--primary-color);
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+        }
+
+        .calendar-nav select:focus {
+            outline: none;
+            border-color: #9000b3;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .calendar-weekdays div {
+            padding: 12px;
+            font-size: 18px;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+            color: #000000;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .calendar-day.has-event {
+            background-color: #ffcc00;
+            color: #000000;
+            font-weight: bold;
+        }
+
+        .calendar-day.today {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .calendar-day.other-month {
+            color: #ccc;
+            background-color: transparent;
+        }
+
+        .statistics-section {
+            flex: 1;
+            margin-left: 10px;
+            margin-right: 20px;
+            width: 60%;
+        }
+
+        .rating {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+        }
+
+        .statistics-table {
+            width: 90%;
+            border-collapse: collapse;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-left: 10px;
+        }
+
+        .statistics-table th, .statistics-table td {
+            border: 1px solid var(--text-color);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .statistics-table th {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .statistics-table tr:nth-child(1) {
+            background-color: gold;
+        }
+
+        .statistics-table tr:nth-child(2) {
+            background-color: silver;
+        }
+
+        .statistics-table tr:nth-child(3) {
+            background-color: #cd7f32;
+        }
+
+        .statistics-table tr:nth-child(n+4) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        footer {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        .main-content {
+            padding-bottom: 60px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
+        <nav>
+            <nav>
+            <a href="{{ url_for('home') }}" class="news" data-text="Новости"></a>
+            <a href="{{ url_for('team') }}" class="team" data-text="Команды"></a>
+            <a href="{{ url_for('media') }}" class="media" data-text="Медиа"></a>
+            <a href="{{ url_for('measure') }}" class="iconMeasure" data-text="Мероприятия"></a>
+            <a href="{{ url_for('contact') }}" class="contact" data-text="О нас"></a>
+            <a href="{{ url_for('login') }}" class="account-link" data-text="Профиль"></a>
+        </nav>
+        </nav>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="left-content">
+                <div class="news-section">
+                    <div class="news-container" id="news-container">
+                        <div class="news_card" id="news_card_1" style="background-image: url('{{ url_for('static', filename='uploads/armwrestling.jpg') }}')" onclick="openModal(1)">
+                            <div class="news_content">
+                                <h2>Турнир по Армрестлингу</h2>
+                                <p>13 декабря в 12.20 в 1 корпусе состоится турнир по армрестлингу среди юношей в рамках Всероссийского проекта АССК России «УниверЛига». Турнир будет проходить в категориях: 70 кг, 80 кг, 90 кг, 90 +, абсолютная. Для участия в турнире необходимо заранее подать заявку на портале <a href="https://rosstudsport.ru/tournament/7976" target="_blank">rosstudsport.ru</a>. На взвешивание подойти к 12.10 По всем вопросам можно обратиться к менеджеру по силовым видам спорта <a href="https://vk.com/id535343960" target="_blank">Даниилу Дегтереву</a> или руководителю ССК «Красные волки» <a href="https://vk.com/viktoriam87" target="_blank">Виктории</a>.</p>
+                            </div>
+                        </div>
+                        <div class="news_card" id="news_card_2" style="background-image: url('{{ url_for('static', filename='uploads/cs2.jpg') }}')" onclick="openModal(2)">
+                            <div class="news_content">
+                                <h2>Турнир CS2 среди СПО города Вологды</h2>
+                                <p>2 декабря, спортсмены нашего ССК, приняли участие в турнире по компьютерному спорту «Кубок Русского Севера» в рамках Спартакиады СПО. Турнир проводился в очном формате в дисциплине «Тактический трехмерный бой» (вид программы Counter-Strike 2). 9 команд СПО заявились для участия. В состав нашей команды вошли: Батраков Никита, Поп Захар, Малетин Вадим, Быстров Савелий, Чайкин Никита. По итогам турнира, наша команда заняла 5 место.</p>
+                            </div>
+                        </div>
+                        <div class="news_card" id="news_card_3" style="background-image: url('{{ url_for('static', filename='uploads/fest.jpg') }}')" onclick="openModal(3)">
+                            <div class="news_content">
+                                <h2>#АССК.ФЕСТ</h2>
+                                <p>Вот и завершилось самое яркое мероприятие в сфере массового спорта «Всероссийский фестиваль студенческого спорта АССК.Фест 2024». Прошли последние турниры, награждение победителей по всем дисциплинам и закрытие фестиваля. Это было здорово! 🐺 По итогам фестиваля, ССК «Красные волки» достигли следующих результатов 🏆: 🏓 Настольный теннис - командный зачет- 🥉 - личный зачет- 🥉место Колотилов Степан ♟️ Шахматы - командный зачет - 🥈место - личный зачет- 🥇место Отрощенко Степан; 🥈место- Лапин Артем 🎮 Dota 2 - командный зачет- 6 место Поздравляем победителей, желаем новых спортивных достижений. Благодарим всех ребят за участие. Гордимся вами!</p>
+                            </div>
+                        </div>
+                        <div class="news_card" id="news_card_4" style="background-image: url('{{ url_for('static', filename='uploads/basketball.jpg') }}')" onclick="openModal(4)">
+                            <div class="news_content">
+                                <h2>Открыли сезон АСБ</h2>
+                                <p>21 и 22 ноября наши сборные команды по баскетболу приняли участие в первых играх Всероссийских соревнований по баскетболу в рамках Ассоциации студенческого баскетбола, г. Вологда, сезон 2024-2025. Итоги двух игровых дней: ВКСиИТ( юноши)-ВГМХА, уступили сопернику. ВКСиИТ(девушки) - СЗИ МГЮА, одержали победу 👍. Благодарим наши команды за участие, поздравляем команду девушек с первой победой. Верим в нашу команду юношей, все у вас получится! Приглашаем всех болельщиков на соревнования, приходи и поддержи наши команды!(расписание игр прилагаем)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="right-content">
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <div class="calendar-title" id="calendar-title">Календарь</div>
+                        <div class="calendar-nav">
+                            <select id="month-select">
+                                <option value="0">Январь</option>
+                                <option value="1">Февраль</option>
+                                <option value="2">Март</option>
+                                <option value="3">Апрель</option>
+                                <option value="4">Май</option>
+                                <option value="5">Июнь</option>
+                                <option value="6">Июль</option>
+                                <option value="7">Август</option>
+                                <option value="8">Сентябрь</option>
+                                <option value="9">Октябрь</option>
+                                <option value="10">Ноябрь</option>
+                                <option value="11">Декабрь</option>
+                            </select>
+                            <select id="year-select">
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <div>Пн</div>
+                        <div>Вт</div>
+                        <div>Ср</div>
+                        <div>Чт</div>
+                        <div>Пт</div>
+                        <div>Сб</div>
+                        <div>Вс</div>
+                    </div>
+                    <div class="calendar-days" id="calendar-days"></div>
+                </div>
+                <section class="statistics-section">
+                    <h2 class="rating">Статистика</h2>
+                    <table class="statistics-table" id="commands-table">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Название команды</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Сюда будут добавлены строки из JavaScript -->
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="newsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div style="display: flex; width: 100%;">
+                <div class="modal-image">
+                    <img id="modalImage" src="" alt="Image">
+                </div>
+                <div class="modal-text">
+                    <h2 id="modalTitle"></h2>
+                    <p id="modalContent"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&COPY; Arieshka, 2024.</p>
+    </footer>
+
+    <script>
+        const newsData = [
+            {
+                title: "Турнир по Армрестлингу",
+                content: "13 декабря в 12.20 в 1 корпусе состоится турнир по армрестлингу среди юношей в рамках Всероссийского проекта АССК России «УниверЛига». Турнир будет проходить в категориях: 70 кг, 80 кг, 90 кг, 90 +, абсолютная. Для участия в турнире необходимо заранее подать заявку на портале <a href='https://rosstudsport.ru/tournament/7976' target='_blank'>rosstudsport.ru</a>. На взвешивание подойти к 12.10 По всем вопросам можно обратиться к менеджеру по силовым видам спорта <a href='https://vk.com/id535343960' target='_blank'>Даниилу Дегтереву</a> или руководителю ССК «Красные волки» <a href='https://vk.com/viktoriam87' target='_blank'>Виктории</a>.",
+                image: "{{ url_for('static', filename='uploads/armwrestling.jpg') }}"
+            },
+            {
+                title: "Турнир CS2 среди СПО города Вологды",
+                content: "2 декабря, спортсмены нашего ССК, приняли участие в турнире по компьютерному спорту «Кубок Русского Севера» в рамках Спартакиады СПО. Турнир проводился в очном формате в дисциплине «Тактический трехмерный бой» (вид программы Counter-Strike 2). 9 команд СПО заявились для участия. В состав нашей команды вошли: Батраков Никита, Поп Захар, Малетин Вадим, Быстров Савелий, Чайкин Никита. По итогам турнира, наша команда заняла 5 место.",
+                image: "{{ url_for('static', filename='uploads/cs2.jpg') }}"
+            },
+            {
+                title: "#АССК.ФЕСТ",
+                content: "Вот и завершилось самое яркое мероприятие в сфере массового спорта «Всероссийский фестиваль студенческого спорта АССК.Фест 2024». Прошли последние турниры, награждение победителей по всем дисциплинам и закрытие фестиваля. Это было здорово! 🐺 По итогам фестиваля, ССК «Красные волки» достигли следующих результатов 🏆: 🏓 Настольный теннис - командный зачет- 🥉 - личный зачет- 🥉место Колотилов Степан ♟️ Шахматы - командный зачет - 🥈место - личный зачет- 🥇место Отрощенко Степан; 🥈место- Лапин Артем 🎮 Dota 2 - командный зачет- 6 место Поздравляем победителей, желаем новых спортивных достижений. Благодарим всех ребят за участие. Гордимся вами!",
+                image: "{{ url_for('static', filename='uploads/fest.jpg') }}"
+            },
+            {
+                title: "Открыли сезон АСБ",
+                content: "21 и 22 ноября наши сборные команды по баскетболу приняли участие в первых играх Всероссийских соревнований по баскетболу в рамках Ассоциации студенческого баскетбола, г. Вологда, сезон 2024-2025. Итоги двух игровых дней: ВКСиИТ( юноши)-ВГМХА, уступили сопернику. ВКСиИТ(девушки) - СЗИ МГЮА, одержали победу 👍. Благодарим наши команды за участие, поздравляем команду девушек с первой победой. Верим в нашу команду юношей, все у вас получится! Приглашаем всех болельщиков на соревнования, приходи и поддержи наши команды!(расписание игр прилагаем)",
+                image: "{{ url_for('static', filename='uploads/basketball.jpg') }}"
+            }
+        ];
+
+        function openModal(index) {
+            const news = newsData[index - 1];
+            document.getElementById('modalTitle').innerText = news.title;
+            document.getElementById('modalContent').innerHTML = news.content;
+            document.getElementById('modalImage').src = news.image;
+            document.getElementById('newsModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('newsModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('newsModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const newsCards = document.querySelectorAll('.news_card');
+            newsCards.forEach((card, index) => {
+                const content = newsData[index].content;
+                const words = content.split(' ');
+                let lines = [];
+                let currentLine = '';
+                words.forEach(word => {
+                    if (currentLine.length + word.length + 1 > 50) {
+                        lines.push(currentLine.trim());
+                        currentLine = '';
+                    }
+                    currentLine += word + ' ';
+                });
+                if (currentLine.trim()) {
+                    lines.push(currentLine.trim());
+                }
+                let truncatedContent = lines.slice(0, 5).join(' ');
+                if (lines.length > 5) {
+                    truncatedContent += '...';
+                }
+                card.querySelector('p').innerHTML = truncatedContent;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarDays = document.getElementById('calendar-days');
+            const monthSelect = document.getElementById('month-select');
+            const yearSelect = document.getElementById('year-select');
+            const calendarTitle = document.getElementById('calendar-title');
+            let currentDate = new Date();
+            let events = [];
+            function updateCalendarTitle() {
+                const options = { month: 'long', year: 'numeric' };
+                calendarTitle.textContent = currentDate.toLocaleDateString('ru-RU', options);
+            }
+            function renderCalendar() {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                let daysHtml = '';
+                for (let i = 0; i < firstDay; i++) {
+                    daysHtml += '<div class="calendar-day other-month"></div>';
+                }
+                const today = new Date();
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const day = new Date(year, month, i);
+                    const dayString = day.toISOString().split('T')[0];
+                    const isToday = day.toDateString() === today.toDateString();
+                    const hasEvent = events.some(event => {
+                        const eventDate = new Date(event.date).toISOString().split('T')[0];
+                        return eventDate === dayString;
+                    });
+                    let dayClass = 'calendar-day';
+                    if (isToday) dayClass += ' today';
+                    if (hasEvent) dayClass += ' has-event';
+                    daysHtml += `<div class="${dayClass}" data-date="${dayString}" onclick="window.location.href='/measure?date=${dayString}'">${i}</div>`;
+                }
+                calendarDays.innerHTML = daysHtml;
+            }
+            function fetchEvents() {
+                fetch('/api/get_events')
+                    .then(response => response.json())
+                    .then(data => {
+                        events = data.events;
+                        renderCalendar();
+                    })
+                    .catch(error => console.error('Ошибка:', error));
+            }
+            monthSelect.addEventListener('change', function() {
+                currentDate.setMonth(parseInt(monthSelect.value));
+                updateCalendarTitle();
+                renderCalendar();
+            });
+            yearSelect.addEventListener('change', function() {
+                currentDate.setFullYear(parseInt(yearSelect.value));
+                updateCalendarTitle();
+                renderCalendar();
+            });
+            updateCalendarTitle();
+            fetchEvents();
+        });
+
+        fetch('/api/get_commands')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#commands-table tbody');
+                tbody.innerHTML = '';
+                data.commands.slice(0, 10).forEach((cmd, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${index + 1}</td><td>${cmd.name}</td>`;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки команд:', error));
+
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-theme');
+        });
+    </script>
+</body>
+</html>

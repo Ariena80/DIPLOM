@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/dark theme.js') }}" defer></script>
+
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
+        <nav>
+            <a href="{{ url_for('home') }}" class="news" data-text="Новости"></a>
+            <a href="{{ url_for('team') }}" class="team" data-text="Команды"></a>
+            <a href="{{ url_for('media') }}" class="media" data-text="Медиа"></a>
+            <a href="{{ url_for('measure') }}" class="iconMeasure" data-text="Мероприятия"></a>
+            <a href="{{ url_for('contact') }}" class="contact" data-text="О нас"></a>
+            <a href="{{ url_for('login') }}" class="account-link" data-text="Профиль"></a>
+        </nav>
+    </header>
+
+    <div class="login-container">
+        <form id="loginForm">
+            <label for="login">Логин:</label>
+            <input type="text" id="login" maxlength="7" name="login" required>
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="button" onclick="loginUser()">Войти</button>
+        </form>
+    </div>
+
+    <script>
+        function loginUser() {
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ login, password }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Неверный логин или пароль');
+                }
+            })
+            .then(data => {
+                console.log('Вход успешен', data);
+                window.location.href = data.redirect;
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+    </script>
+</body>
+</html>

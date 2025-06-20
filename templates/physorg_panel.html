@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/account-styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+
+        #cropCanvas {
+            border-radius: 50%;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
+        <nav class="navigation">
+            <a href="{{ url_for('home') }}" class="news" data-text="Новости"></a>
+            <a href="{{ url_for('team') }}" class="team" data-text="Команды"></a>
+            <a href="{{ url_for('media') }}" class="media" data-text="Медиа"></a>
+            <a href="{{ url_for('measure') }}" class="iconMeasure" data-text="Мероприятия"></a>
+            <a href="{{ url_for('contact') }}" class="contact" data-text="О нас"></a>
+            <a href="{{ url_for('login') }}" class="account-link" data-text="Профиль"></a>
+        </nav>
+    </header>
+    <div class="main-container">
+        <div class="profile-section">
+            <h2>Мой профиль</h2>
+            <div class="profile-picture">
+                <img src="{{ url_for('static', filename='style/icon-placeholder.png') }}" alt="Профиль" id="previewImage">
+                <div class="profile-picture-actions">
+                    <button onclick="document.getElementById('profilePictureInput').click()">Загрузить фото</button>
+                    <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+            <div class="profile-info">
+                <div class="profile-info-row">
+                    <div class="profile-info-item">
+                        <label>Фамилия:</label>
+                        <p id="surname"></p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Имя:</label>
+                        <p id="first_name"></p>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Отчество:</label>
+                        <p id="middle_name"></p>
+                    </div>
+                </div>
+                <div class="profile-info-row">
+                    <div class="profile-info-item">
+                        <label>Должность:</label>
+                        <p id="position"></p>
+                    </div>
+                </div>
+                <button id="logoutButton" class="logoutButton">Выйти</button>
+            </div>
+        </div>
+
+        <div id="teamForm" class="content">
+            <h2>Добавление команды</h2>
+            <form action="add_team.php" method="POST">
+                <div class="form-group">
+                    <label for="team_name">Название команды:</label>
+                    <input type="text" id="team_name" name="team_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="course">Выбор курса:</label>
+                    <select id="course" name="course" required>
+                        <option value="1">1 курс</option>
+                        <option value="2">2 курс</option>
+                        <option value="3">3 курс</option>
+                        <option value="4">4 курс</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sport_type">Выбор вида спорта:</label>
+                    <select id="sport_type" name="sport_type" required onchange="updateTeamMembers()">
+                        <option value="football">Футбол</option>
+                        <option value="basketball">Баскетбол 3х3</option>
+                        <option value="volleyball">Волейбол</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="gender">Пол участников:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="male" name="gender" value="male" required>
+                        <label for="male">Мужская</label>
+                        <input type="radio" id="female" name="gender" value="female" required>
+                        <label for="female">Женская</label>
+                    </div>
+                </div>
+                <div class="form-group" id="team_members_container">
+                    <!-- Здесь будут динамически добавляться поля для игроков -->
+                </div>
+                <div class="form-group">
+                    <label for="reserve_member">Запасной игрок:</label>
+                    <input type="text" id="reserve_member" name="reserve_member" placeholder="Запасной игрок">
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Добавить команду">
+                </div>
+            </form>
+        </div>
+
+        <div id="viewRequestsForm" class="content">
+            <h2>Просмотр заявок</h2>
+            <form>
+                <div class="form-group">
+                    <label for="request_id">ID заявки:</label>
+                    <input type="text" id="request_id" name="request_id" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Просмотреть заявку">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUploadModal()">&times;</span>
+            <h2>Загрузить фото</h2>
+            <canvas id="cropCanvas"></canvas>
+            <input type="range" id="zoomRange" min="1" max="3" step="0.1" value="1">
+            <button id="savePic">Сохранить</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/user_data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('surname').textContent = data.surname;
+                    document.getElementById('first_name').textContent = data.name;
+                    document.getElementById('middle_name').textContent = data.patronymic;
+
+                    const roleId = data.role;
+                    let position = '';
+                    if (roleId === 1) {
+                        position = 'Администратор';
+                    } else if (roleId === 2) {
+                        position = 'Физорг';
+                    }
+                    document.getElementById('position').textContent = position;
+                })
+                .catch(error => console.error('Error fetching user data:', error));
+
+            document.getElementById('profilePictureInput').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.onload = function() {
+                            const cropCanvas = document.getElementById('cropCanvas');
+                            const ctx = cropCanvas.getContext('2d');
+                            cropCanvas.width = img.width;
+                            cropCanvas.height = img.height;
+                            ctx.drawImage(img, 0, 0, img.width, img.height);
+                            document.getElementById('uploadModal').style.display = 'block';
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            function closeUploadModal() {
+                document.getElementById('uploadModal').style.display = 'none';
+            }
+
+            document.getElementById('savePic').addEventListener('click', function() {
+                const cropCanvas = document.getElementById('cropCanvas');
+                const fileInput = document.getElementById('profilePictureInput');
+                const formData = new FormData();
+
+                if (fileInput.files.length > 0) {
+                    formData.append('profile_picture', fileInput.files[0]);
+
+                    fetch('/api/profile_picture', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Фото профиля успешно загружено');
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                document.getElementById('previewImage').src = e.target.result;
+                                localStorage.setItem('profileImage', e.target.result);
+                            }
+                            reader.readAsDataURL(fileInput.files[0]);
+                            closeUploadModal();
+                        } else {
+                            alert('Ошибка при загрузке фото: ' + data.error);
+                        }
+                    })
+                    .catch(error => console.error('Ошибка:', error));
+                } else {
+                    alert('Пожалуйста, выберите файл для загрузки.');
+                }
+            });
+
+            const savedImage = localStorage.getItem('profileImage');
+            if (savedImage) {
+                document.getElementById('previewImage').src = savedImage;
+            }
+
+            const inactivityDuration = 3600000;
+            let inactivityTimeout;
+
+            function startInactivityTimer() {
+                inactivityTimeout = setTimeout(logoutDueToInactivity, inactivityDuration);
+            }
+
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimeout);
+                startInactivityTimer();
+            }
+
+            function logoutDueToInactivity() {
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = 'login.html';
+                    } else {
+                        alert('Ошибка при автоматическом выходе');
+                    }
+                })
+                .catch(error => console.error('Error logging out due to inactivity:', error));
+            }
+
+            document.addEventListener('mousemove', resetInactivityTimer);
+            document.addEventListener('keypress', resetInactivityTimer);
+            document.addEventListener('click', resetInactivityTimer);
+
+            startInactivityTimer();
+        });
+
+        function updateTeamMembers() {
+            const sportType = document.querySelector("#teamForm select[name='sport_type']").value;
+            const membersContainer = document.getElementById("team_members_container");
+
+            if (membersContainer) {
+                membersContainer.innerHTML = '<label for="team_members">Игроки команды:</label><br>';
+
+                let memberCount;
+                if (sportType === "football") {
+                    memberCount = 5;
+                } else if (sportType === "basketball") {
+                    memberCount = 3;
+                } else if (sportType === "volleyball") {
+                    memberCount = 6;
+                } else {
+                    memberCount = 1;
+                }
+
+                for (let i = 1; i <= memberCount; i++) {
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.name = "team_members[]";
+                    input.placeholder = `Игрок команды ${i}`;
+                    input.required = true;
+                    membersContainer.appendChild(input);
+                    membersContainer.appendChild(document.createElement("br"));
+                }
+            }
+        }
+
+        document.querySelector("#teamForm select[name='sport_type']").addEventListener('change', updateTeamMembers);
+    </script>
+</body>
+</html>
