@@ -41,10 +41,18 @@ def update_profile():
 
 @api.route('/upload', methods=['POST'])
 def upload():
+    if 'media_files' not in request.files:
+        return jsonify({'success': False, 'message': 'No files uploaded'}), 400
+
     files = request.files.getlist('media_files')
     upload_dir = 'static/uploads/'
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+
     for file in files:
-        file.save(os.path.join(upload_dir, file.filename))
+        if file.filename != '':
+            file.save(os.path.join(upload_dir, file.filename))
+
     return jsonify({'success': True, 'message': 'Media uploaded successfully'})
 
 @api.route('/add_command', methods=['POST'])
@@ -134,6 +142,26 @@ def add_award():
     db.session.add(new_award)
     db.session.commit()
     return jsonify({'success': True, 'message': 'Award added successfully'})
+
+@api.route('/get_events', methods=['GET'])
+def get_events():
+    try:
+        events = Event.query.all()
+        events_list = [{
+            'id': event.id,
+            'event_name': event.event_name,
+            'event_date': event.event_date.isoformat(),
+            'location': event.location,
+            'description': event.description,
+            'imageURL': event.imageURL,
+            'sportTypeID': event.sport_type
+        } for event in events]
+
+        print('Events data:', events_list)  # Логирование данных для проверки
+        return jsonify({'events': events_list})
+    except Exception as e:
+        print('Error fetching events:', e)
+        return jsonify({'error': 'Ошибка при получении мероприятий'}), 500
 
 @api.route('/', methods=['GET'])
 def home():

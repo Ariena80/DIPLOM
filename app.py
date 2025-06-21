@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, Text, Date
+from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, Text, Date, Boolean, Time
 from sqlalchemy.orm import relationship
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
@@ -16,9 +16,10 @@ from werkzeug.utils import secure_filename
 import io
 from functools import wraps
 
+
 # Инициализация Flask приложения
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@DESKTOP-VF9RI0P\SQLEXPRESS/FIZORGER-DB?driver=ODBC+Driver+17+for+SQL+Server'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@DESKTOP-VF9RI0P\SQLEXPRESS/REDWOLFS-DB?driver=ODBC+Driver+17+for+SQL+Server'
 app.config['SECRET_KEY'] = 'dde8a6ba4fdf7dbecb55874b5c03d02fd575d5ad4623e70c'
 
 # Инициализация SQLAlchemy
@@ -44,10 +45,11 @@ class User(db.Model):
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
     login = Column(String(50), nullable=False)
-    password = Column(String(255), nullable=False)
+    password = Column(Text, nullable=False)
     image = Column(LargeBinary, nullable=True)
     genderID = Column(Integer, ForeignKey('Gender.id'), nullable=True)
     groupID = Column(Integer, ForeignKey('Group.id'), nullable=True)
+    position = Column(String(50), nullable=True)
 
     role = relationship('Role', back_populates='users')
     gender = relationship('Gender', back_populates='users')
@@ -62,36 +64,40 @@ class Role(db.Model):
 class Gender(db.Model):
     __tablename__ = 'Gender'
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(7), nullable=False)
     users = relationship('User', back_populates='gender')
 
 class Group(db.Model):
     __tablename__ = 'Group'
     id = Column(Integer, primary_key=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(10), nullable=False)
     users = relationship('User', back_populates='group')
 
 class News(db.Model):
     __tablename__ = 'News'
     id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
-    content = Column(Text, nullable=False)
-    imageURL = Column(String(255), nullable=True)
+    description = Column(Text, nullable=False)
     date = Column(Date, nullable=False)
+    imageURL = Column(String(255), nullable=True)
 
 class Command(db.Model):
     __tablename__ = 'Command'
     id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
-    statistics = relationship('TeamStatistics', backref='command', lazy=True)
+    name = Column(String(50), nullable=True)
+    courseID = Column(Integer, ForeignKey('Group.id'), nullable=True)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=True)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
 
-class TeamStatistics(db.Model):
-    __tablename__ = 'TeamStatistics'
+class EventType(db.Model):
+    __tablename__ = 'EventType'
     id = Column(Integer, primary_key=True)
-    commandID = Column(Integer, ForeignKey('Command.id'), unique=True)
-    wins = Column(Integer, default=0)
-    losses = Column(Integer, default=0)
-    activities = Column(Integer, default=0)
+    name = Column(String(50), nullable=False)
+
+class Place(db.Model):
+    __tablename__ = 'Place'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
 
 class Event(db.Model):
     __tablename__ = 'Event'
@@ -100,26 +106,33 @@ class Event(db.Model):
     date = Column(Date, nullable=False)
     location = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    sportTypeID = Column(Integer, nullable=False)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=True)
+    time = Column(Time, nullable=True)
+    eventTypeID = Column(Integer, ForeignKey('EventType.id'), nullable=True)
+    placeID = Column(Integer, ForeignKey('Place.id'), nullable=True)
+    imageURL = Column(String(255), nullable=True)
 
-class MediaCards(db.Model):
-    __tablename__ = 'MediaCards'
+class Media(db.Model):
+    __tablename__ = 'Media'
     id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
-    mediaType = Column(String(50), nullable=False)
     mediaUrl = Column(String(255), nullable=False)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
 
 class ScheduleSections(db.Model):
     __tablename__ = 'ScheduleSections'
     id = Column(Integer, primary_key=True)
-    sportTypeID = Column(Integer, nullable=False)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
     time = Column(String(11), nullable=False)
     date = Column(Date, nullable=False)
+    coachName = Column(String(100), nullable=True)
 
 class StudentInCommand(db.Model):
     __tablename__ = 'StudentInCommand'
     id = Column(Integer, primary_key=True)
-    studID = Column(Integer, ForeignKey('User.id'), nullable=False)
+    surname = Column(String(50), nullable=False)
+    name = Column(String(50), nullable=False)
+    patronymic = Column(String(50), nullable=True)
     groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
     commandID = Column(Integer, ForeignKey('Command.id'), nullable=False)
     date = Column(Date, nullable=False)
@@ -128,8 +141,21 @@ class Award(db.Model):
     __tablename__ = 'Award'
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    recipient = Column(String(255), nullable=False)
-    image = Column(String(255), nullable=True)
+    recipient = Column(String(100), nullable=True)
+    image = Column(LargeBinary, nullable=True)
+
+class SportType(db.Model):
+    __tablename__ = 'SportType'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
+
+class TeamStatistics(db.Model):
+    __tablename__ = 'TeamStatistics'
+    id = Column(Integer, primary_key=True)
+    commandID = Column(Integer, ForeignKey('Command.id'), nullable=False)
+    wins = Column(Integer, default=0)
+    losses = Column(Integer, default=0)
+    activities = Column(Integer, default=0)
 
 def role_required(role_id):
     def decorator(f):
@@ -176,12 +202,12 @@ def contact():
     return render_template('contact.html')
 
 @app.route('/user_panel')
-@role_required(1)  # 1 - роль администратора
+@role_required(1) # 1 - роль администратора
 def admin_panel():
     return render_template('user_panel.html')
 
 @app.route('/physorg_panel')
-@role_required(2)  # 2 - роль физорга
+@role_required(2) # 2 - роль физорга
 def physorg_panel():
     return render_template('physorg_panel.html')
 
@@ -211,9 +237,9 @@ def login():
         user = db.session.execute(db.select(User).filter_by(login=user_login)).scalar_one_or_none()
         if user and check_password_hash(user.password, user_password):
             session['user_id'] = user.id
-            if user.roleID == 1:  # Администратор
+            if user.roleID == 1: # Администратор
                 return redirect(url_for('admin_panel'))
-            elif user.roleID == 2:  # Физорг
+            elif user.roleID == 2: # Физорг
                 return redirect(url_for('physorg_panel'))
             else:
                 flash('Неверная роль пользователя', 'error')
@@ -251,21 +277,11 @@ def api_logout():
 def add_news_route():
     title = request.form['title']
     content = request.form['content']
-    image = request.files.get('image')
     date = request.form['date']
-
-    if image:
-        img = Image.open(image.stream)
-        img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format='JPEG')
-        img_byte_arr = img_byte_arr.getvalue()
-    else:
-        img_byte_arr = None
 
     new_news = News(
         title=title,
-        content=content,
-        imageURL=img_byte_arr,
+        description=content,
         date=date
     )
     db.session.add(new_news)
@@ -276,14 +292,14 @@ def add_news_route():
 @app.route('/api/get_news', methods=['GET'])
 def get_news():
     news = News.query.all()
-    return jsonify({'news': [{'id': n.id, 'title': n.title, 'content': n.content, 'date': n.date, 'imageURL': n.imageURL} for n in news]})
-
-@app.route('/api/get_news_image/<int:news_id>', methods=['GET'])
-def get_news_image(news_id):
-    news = db.session.get(News, news_id)
-    if news and news.imageURL:
-        return send_file(BytesIO(news.imageURL), mimetype='image/jpeg')
-    return jsonify({"error": "Изображение не найдено"}), 404
+    news_list = [{
+        'id': n.id,
+        'title': n.title,
+        'description': n.description,
+        'date': n.date.isoformat(),
+        'imageURL': n.imageURL
+    } for n in news]
+    return jsonify({'news': news_list})
 
 @app.route('/api/add_command', methods=['POST'])
 def add_command():
@@ -307,7 +323,7 @@ def add_team():
         if len(users) != len(team_members) + 1:
             return jsonify({"success": False, "message": "Один или несколько пользователей не найдены"}), 400
 
-        new_command = Command(name=command_name)
+        new_command = Command(name=command_name, courseID=course_id, genderID=gender_id, sportTypeID=sport_type_id)
         db.session.add(new_command)
         db.session.commit()
 
@@ -333,30 +349,60 @@ def add_event():
     location = request.form['location']
     description = request.form['description']
     sportTypeID = request.form['sportTypeID']
-    new_event = Event(name=name, date=date, location=location, description=description, sportTypeID=sportTypeID)
+    eventTypeID = request.form['eventTypeID']
+    placeID = request.form['placeID']
+    imageURL = request.form.get('imageURL')  
+
+    new_event = Event(
+        name=name,
+        date=date,
+        location=location,
+        description=description,
+        sportTypeID=sportTypeID,
+        eventTypeID=eventTypeID,
+        placeID=placeID,
+        imageURL=imageURL  
+    )
+
     db.session.add(new_event)
     db.session.commit()
+
     return jsonify({"success": True, "message": "Мероприятие добавлено успешно"}), 200
 
 @app.route('/api/get_events', methods=['GET'])
 def get_events():
-    events = Event.query.all()
-    return jsonify({'events': [{'id': e.id, 'name': e.name, 'date': e.date, 'location': e.location, 'description': e.description, 'sportTypeID': e.sportTypeID} for e in events]})
+    try:
+        events = Event.query.all()
+        events_list = [{
+            'id': event.id,
+            'event_name': event.name,
+            'event_date': event.date.isoformat() if event.date else None,
+            'location': event.location,
+            'description': event.description,
+            'imageURL': event.imageURL,
+            'sportTypeID': event.sportTypeID
+        } for event in events]
 
+        print('Events data:', events_list)  # Логирование данных
+        return jsonify({'events': events_list})  # Возвращаем объект с ключом 'events'
+    except Exception as e:
+        print('Error fetching events:', e)
+        return jsonify({'error': 'Ошибка при получении мероприятий'}), 500
+    
 @app.route('/api/add_media', methods=['POST'])
 def add_media():
     title = request.form['title']
-    mediaType = request.form['mediaType']
     mediaUrl = request.form['mediaUrl']
-    new_media = MediaCards(title=title, mediaType=mediaType, mediaUrl=mediaUrl)
+    sportTypeID = request.form['sportTypeID']
+    new_media = Media(title=title, mediaUrl=mediaUrl, sportTypeID=sportTypeID)
     db.session.add(new_media)
     db.session.commit()
     return jsonify({"success": True, "message": "Медиа добавлено успешно"}), 200
 
 @app.route('/api/get_media', methods=['GET'])
 def get_media():
-    media = MediaCards.query.all()
-    return jsonify({'media': [{'id': m.id, 'title': m.title, 'mediaType': m.mediaType, 'mediaUrl': m.mediaUrl} for m in media]})
+    media = Media.query.all()
+    return jsonify({'media': [{'id': m.id, 'title': m.title, 'mediaUrl': m.mediaUrl, 'sportTypeID': m.sportTypeID} for m in media]})
 
 @app.route('/api/edit_schedule', methods=['POST'])
 def edit_schedule():
