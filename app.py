@@ -1,31 +1,36 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, Text, Date, Boolean, Time
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, Text, Date, Boolean, Time, DateTime
+from sqlalchemy.orm import relationship, joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 import logging
 from flask import send_file
 from io import BytesIO
 from PIL import Image
-from sqlalchemy.exc import OperationalError
-from sqlalchemy import text
-from sqlalchemy import desc
+from sqlalchemy.exc import OperationalError, IntegrityError
+from sqlalchemy import text, desc
 from werkzeug.utils import secure_filename
 import io
+import os
 from functools import wraps
+from flask_migrate import Migrate
 
-
-# Инициализация Flask приложения
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@DESKTOP-VF9RI0P\SQLEXPRESS/REDWOLFS-DB?driver=ODBC+Driver+17+for+SQL+Server'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@DESKTOP-VF9RI0P\SQLEXPRESS/REDWOLFS?driver=ODBC+Driver+17+for+SQL+Server'
 app.config['SECRET_KEY'] = 'dde8a6ba4fdf7dbecb55874b5c03d02fd575d5ad4623e70c'
 
-# Инициализация SQLAlchemy
+UPLOAD_FOLDER = 'static/uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 db = SQLAlchemy(app)
 
-# Проверка подключения к базе данных
+# Инициализация Flask-Migrate
+migrate = Migrate(app, db)
+
 try:
     with app.app_context():
         db.session.execute(text("SELECT 1"))
@@ -36,24 +41,42 @@ except OperationalError as e:
 logging.basicConfig(level=logging.DEBUG)
 logging.debug(f"SECRET_KEY настроен: {app.config['SECRET_KEY']}")
 
-# Определение моделей
 class User(db.Model):
     __tablename__ = 'User'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     roleID = Column(Integer, ForeignKey('Role.id'), nullable=False)
     surname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    login = Column(String(50), nullable=False)
+    login = Column(String(50), nullable=False, unique=True)
     password = Column(Text, nullable=False)
     image = Column(LargeBinary, nullable=True)
-    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=True)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=False)
     groupID = Column(Integer, ForeignKey('Group.id'), nullable=True)
     position = Column(String(50), nullable=True)
 
     role = relationship('Role', back_populates='users')
     gender = relationship('Gender', back_populates='users')
     group = relationship('Group', back_populates='users')
+
+class Request(db.Model):
+    __tablename__ = 'requests'
+    id = Column(Integer, primary_key=True)
+    team_name = Column(String(50), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+    sport_type_id = Column(Integer, ForeignKey('sport_type.id'), nullable=False)
+    gender_id = Column(Integer, ForeignKey('gender.id'), nullable=False)
+    status = Column(String(20), default='pending')
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Связь с таблицей StudentInCommand
+    students = relationship("StudentInCommand", back_populates="request", cascade="all, delete-orphan")
+
+
+class Course(db.Model):
+    __tablename__ = 'Course'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
 
 class Role(db.Model):
     __tablename__ = 'Role'
@@ -73,6 +96,13 @@ class Group(db.Model):
     name = Column(String(10), nullable=False)
     users = relationship('User', back_populates='group')
 
+class Award(db.Model):
+    __tablename__ = 'Award'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    recipient = Column(String(100), nullable=True)
+    imageURL = Column(String(255), nullable=True)
+
 class News(db.Model):
     __tablename__ = 'News'
     id = Column(Integer, primary_key=True)
@@ -85,8 +115,9 @@ class Command(db.Model):
     __tablename__ = 'Command'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=True)
-    courseID = Column(Integer, ForeignKey('Group.id'), nullable=True)
-    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=True)
+    courseID = Column(Integer, ForeignKey('Course.id'), nullable=False)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=False)
+    groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
     sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
 
 class EventType(db.Model):
@@ -104,13 +135,14 @@ class Event(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     date = Column(Date, nullable=False)
-    location = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=True)
     time = Column(Time, nullable=True)
     eventTypeID = Column(Integer, ForeignKey('EventType.id'), nullable=True)
     placeID = Column(Integer, ForeignKey('Place.id'), nullable=True)
     imageURL = Column(String(255), nullable=True)
+
+    place = relationship('Place', backref='events')
 
 class Media(db.Model):
     __tablename__ = 'Media'
@@ -128,21 +160,18 @@ class ScheduleSections(db.Model):
     coachName = Column(String(100), nullable=True)
 
 class StudentInCommand(db.Model):
-    __tablename__ = 'StudentInCommand'
+    __tablename__ = 'student_in_command'
     id = Column(Integer, primary_key=True)
     surname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
-    commandID = Column(Integer, ForeignKey('Command.id'), nullable=False)
-    date = Column(Date, nullable=False)
+    group_id = Column(Integer, ForeignKey('group.id'), nullable=False)
 
-class Award(db.Model):
-    __tablename__ = 'Award'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
-    recipient = Column(String(100), nullable=True)
-    image = Column(LargeBinary, nullable=True)
+    # Внешний ключ для связи с таблицей Request
+    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
+
+    # Связь с таблицей Request
+    request = relationship("Request", back_populates="students")
 
 class SportType(db.Model):
     __tablename__ = 'SportType'
@@ -202,12 +231,12 @@ def contact():
     return render_template('contact.html')
 
 @app.route('/user_panel')
-@role_required(1) # 1 - роль администратора
+@role_required(1)
 def admin_panel():
     return render_template('user_panel.html')
 
 @app.route('/physorg_panel')
-@role_required(2) # 2 - роль физорга
+@role_required(2)
 def physorg_panel():
     return render_template('physorg_panel.html')
 
@@ -237,9 +266,9 @@ def login():
         user = db.session.execute(db.select(User).filter_by(login=user_login)).scalar_one_or_none()
         if user and check_password_hash(user.password, user_password):
             session['user_id'] = user.id
-            if user.roleID == 1: # Администратор
+            if user.roleID == 1:
                 return redirect(url_for('admin_panel'))
-            elif user.roleID == 2: # Физорг
+            elif user.roleID == 2:
                 return redirect(url_for('physorg_panel'))
             else:
                 flash('Неверная роль пользователя', 'error')
@@ -274,24 +303,44 @@ def api_logout():
     return jsonify({"success": True, "message": "Выход выполнен успешно"}), 200
 
 @app.route('/api/add_news', methods=['POST'])
-def add_news_route():
-    title = request.form['title']
-    content = request.form['content']
-    date = request.form['date']
+def add_news():
+    title = request.form.get('title')
+    content = request.form.get('content')
+    image = request.files.get('image')
+
+    existing_news = News.query.filter_by(title=title).first()
+    if existing_news:
+        return jsonify({"success": False, "message": "Новость с таким заголовком уже существует."}), 400
+
+    image_path = None
+    if image and image.filename != '':
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+
+        unique_filename = f"photo_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.jpg"
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        image.save(save_path)
+        image_path = f"static/uploads/{unique_filename}"
 
     new_news = News(
         title=title,
         description=content,
-        date=date
+        date=datetime.now().date(),
+        imageURL=image_path
     )
-    db.session.add(new_news)
-    db.session.commit()
 
-    return jsonify({"success": True, "message": "Новость добавлена успешно"}), 200
+    try:
+        db.session.add(new_news)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "Новость с таким заголовком уже существует."}), 400
+
+    return jsonify({"success": True, "message": "Новость добавлена успешно", "imageURL": image_path}), 200
 
 @app.route('/api/get_news', methods=['GET'])
 def get_news():
-    news = News.query.all()
+    news = News.query.order_by(News.date.desc()).limit(4).all()
     news_list = [{
         'id': n.id,
         'title': n.title,
@@ -301,94 +350,154 @@ def get_news():
     } for n in news]
     return jsonify({'news': news_list})
 
-@app.route('/api/add_command', methods=['POST'])
-def add_command():
-    name = request.form['name']
-    new_command = Command(name=name)
-    db.session.add(new_command)
-    db.session.commit()
-    return jsonify({"success": True, "message": "Команда добавлена успешно"}), 200
+@app.route('/static/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/api/add_team', methods=['POST'])
-def add_team():
+@app.route('/api/get_courses', methods=['GET'])
+def get_courses():
+    courses = Course.query.all()
+    courses_list = [{'id': course.id, 'name': course.name} for course in courses]
+    return jsonify({'courses': courses_list})
+
+@app.route('/api/get_genders', methods=['GET'])
+def get_genders():
+    genders = Gender.query.all()
+    genders_list = [{'id': gender.id, 'name': gender.name} for gender in genders]
+    return jsonify({'genders': genders_list})
+
+@app.route('/api/get_sport_types', methods=['GET'])
+def get_sport_types():
+    sport_types = SportType.query.all()
+    sport_types_list = [{'id': st.id, 'name': st.name} for st in sport_types]
+    return jsonify({'sport_types': sport_types_list})
+
+@app.route('/api/get_event_types', methods=['GET'])
+def get_event_types():
+    event_types = EventType.query.all()
+    event_types_list = [{'id': et.id, 'name': et.name} for et in event_types]
+    return jsonify({'event_types': event_types_list})
+
+@app.route('/api/get_locations', methods=['GET'])
+def get_locations():
+    locations = Place.query.all()
+    locations_list = [{'id': loc.id, 'name': loc.name} for loc in locations]
+    return jsonify({'locations': locations_list})
+
+@app.route('/api/add_team_request', methods=['POST'])
+def add_team_request():
     try:
-        command_name = request.form['team_name']
-        course_id = request.form['course']
-        sport_type_id = request.form['sport_type']
-        gender_id = request.form['gender']
-        team_members = request.form.getlist('team_members[]')
-        reserve_member = request.form['reserve_member']
+        data = request.get_json()
+        team_name = data.get('team_name')
+        sport_type_id = data.get('sport_type')
+        gender_id = data.get('gender')
 
-        users = db.session.query(User).filter(User.id.in_(team_members + [reserve_member])).all()
-        if len(users) != len(team_members) + 1:
-            return jsonify({"success": False, "message": "Один или несколько пользователей не найдены"}), 400
+        new_request = Request(
+            team_name=team_name,
+            sport_type_id=sport_type_id,
+            gender_id=gender_id
+        )
 
-        new_command = Command(name=command_name, courseID=course_id, genderID=gender_id, sportTypeID=sport_type_id)
-        db.session.add(new_command)
+        db.session.add(new_request)
         db.session.commit()
 
-        for member in team_members:
-            new_member = StudentInCommand(commandID=new_command.id, studID=member, groupID=users[team_members.index(member)].groupID, date=datetime.now().date())
-            db.session.add(new_member)
-
-        new_reserve_member = StudentInCommand(commandID=new_command.id, studID=reserve_member, groupID=users[len(team_members)].groupID, date=datetime.now().date())
-        db.session.add(new_reserve_member)
-
-        db.session.commit()
-
-        return jsonify({"success": True, "message": "Команда добавлена успешно"}), 200
-    except KeyError as e:
-        return jsonify({"success": False, "message": f"Отсутствуют данные формы: {e}"}), 400
+        return jsonify({"success": True, "message": "Заявка на команду добавлена успешно"}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/get_requests', methods=['GET'])
+def get_requests():
+    requests = Request.query.all()
+    requests_list = [{
+        'id': req.id,
+        'team_name': req.team_name,
+        'sport_type': req.sport_type_id,
+        'gender': req.gender_id,
+        'status': req.status
+    } for req in requests]
+    return jsonify({'requests': requests_list})
+
+@app.route('/api/approve_request', methods=['POST'])
+def approve_request():
+    data = request.get_json()
+    request_id = data.get('id')
+
+    request = Request.query.get(request_id)
+    if request:
+        request.status = 'approved'
+        db.session.commit()
+        return jsonify({"success": True, "message": "Заявка одобрена"})
+    else:
+        return jsonify({"success": False, "message": "Заявка не найдена"})
+
+@app.route('/api/reject_request/<int:request_id>', methods=['POST'])
+def reject_request(request_id):
+    request_to_reject = Request.query.get(request_id)
+    if request_to_reject:
+        request_to_reject.status = 'rejected'
+        db.session.commit()
+        return jsonify({"success": True, "message": "Заявка отклонена"}), 200
+    else:
+        return jsonify({"success": False, "message": "Заявка не найдена"}), 404
 
 @app.route('/api/add_event', methods=['POST'])
 def add_event():
-    name = request.form['name']
-    date = request.form['date']
-    location = request.form['location']
-    description = request.form['description']
-    sportTypeID = request.form['sportTypeID']
-    eventTypeID = request.form['eventTypeID']
-    placeID = request.form['placeID']
-    imageURL = request.form.get('imageURL')  
+    data = request.form
+    required_fields = ['event_type', 'event_name', 'sport_type', 'description', 'event_date', 'event_time', 'location']
 
-    new_event = Event(
-        name=name,
-        date=date,
-        location=location,
-        description=description,
-        sportTypeID=sportTypeID,
-        eventTypeID=eventTypeID,
-        placeID=placeID,
-        imageURL=imageURL  
-    )
+    if all(field in data for field in required_fields):
+        try:
+            # Проверка на существование мероприятия с таким же названием и датой
+            existing_event = Event.query.filter_by(
+                name=data['event_name'],
+                date=datetime.strptime(data['event_date'], '%Y-%m-%d').date()
+            ).first()
 
-    db.session.add(new_event)
-    db.session.commit()
+            if existing_event:
+                return jsonify({'success': False, 'message': 'Мероприятие с таким названием и датой уже существует.'}), 400
 
-    return jsonify({"success": True, "message": "Мероприятие добавлено успешно"}), 200
+            new_event = Event(
+                name=data['event_name'],
+                date=datetime.strptime(data['event_date'], '%Y-%m-%d').date(),
+                description=data['description'],
+                sportTypeID=int(data['sport_type']),
+                time=datetime.strptime(data['event_time'], '%H:%M').time(),
+                eventTypeID=int(data['event_type']),
+                placeID=int(data['location'])
+            )
+
+            db.session.add(new_event)
+            db.session.commit()
+
+            return jsonify({'success': True, 'message': 'Мероприятие успешно добавлено'})
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)}), 500
+    else:
+        return jsonify({'success': False, 'message': 'Отсутствуют обязательные поля'}), 400
+
 
 @app.route('/api/get_events', methods=['GET'])
 def get_events():
     try:
-        events = Event.query.all()
+        events = Event.query.options(joinedload(Event.place)).all()
         events_list = [{
             'id': event.id,
-            'event_name': event.name,
-            'event_date': event.date.isoformat() if event.date else None,
-            'location': event.location,
+            'name': event.name,
+            'date': event.date.isoformat() if event.date else None,
+            'time': event.time.isoformat() if event.time else None,
             'description': event.description,
             'imageURL': event.imageURL,
-            'sportTypeID': event.sportTypeID
+            'sportTypeID': event.sportTypeID,
+            'place': event.place.name if event.place else 'Не указано'
         } for event in events]
 
-        print('Events data:', events_list)  # Логирование данных
-        return jsonify({'events': events_list})  # Возвращаем объект с ключом 'events'
+        return jsonify({'events': events_list})
     except Exception as e:
-        print('Error fetching events:', e)
         return jsonify({'error': 'Ошибка при получении мероприятий'}), 500
-    
+
 @app.route('/api/add_media', methods=['POST'])
 def add_media():
     title = request.form['title']
@@ -404,59 +513,58 @@ def get_media():
     media = Media.query.all()
     return jsonify({'media': [{'id': m.id, 'title': m.title, 'mediaUrl': m.mediaUrl, 'sportTypeID': m.sportTypeID} for m in media]})
 
-@app.route('/api/edit_schedule', methods=['POST'])
-def edit_schedule():
-    data = request.form
-    schedule = ScheduleSections.query.get(data['id'])
-    if schedule:
-        schedule.time = data['time']
-        schedule.date = data['date']
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Расписание обновлено успешно'}), 200
-    return jsonify({'success': False, 'message': 'Расписание не найдено'}), 404
-
-@app.route('/api/get_schedule', methods=['GET'])
-def get_schedule():
-    schedule = ScheduleSections.query.all()
-    return jsonify({'schedule': [{'id': s.id, 'sportTypeID': s.sportTypeID, 'time': s.time, 'date': s.date} for s in schedule]})
-
 @app.route('/api/add_physorg', methods=['POST'])
 def add_physorg():
-    surname = request.form['surname']
-    name = request.form['name']
-    patronymic = request.form['patronymic']
-    gender_name = request.form['gender']
-    course = request.form['course']
-    group_name = request.form['group']
-    login = request.form['login']
-    password = request.form['password']
+    try:
+        surname = request.form['surname']
+        name = request.form['name']
+        patronymic = request.form['patronymic']
+        gender_name = request.form['gender']
+        course = request.form['course']
+        group_name = request.form['group']
+        login = request.form['login']
+        password = request.form['password']
 
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        # Проверка на существование пользователя с таким же логином
+        existing_user = User.query.filter_by(login=login).first()
+        if existing_user:
+            return jsonify({"success": False, "message": "Пользователь с таким логином уже существует"}), 400
 
-    gender_record = db.session.query(Gender).filter_by(name=gender_name).first()
-    if gender_record is None:
-        return jsonify({"success": False, "message": f"Указанный пол '{gender_name}' не найден в базе данных"}), 400
-    gender_id = gender_record.id
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        gender_id = 1 if gender_name == 'female' else 2
 
-    group_record = db.session.query(Group).filter_by(name=group_name).first()
-    if group_record is None:
-        return jsonify({"success": False, "message": f"Указанная группа '{group_name}' не найдена в базе данных"}), 400
-    group_id = group_record.id
+        group_record = Group.query.filter_by(name=group_name).first()
+        if group_record is None:
+            return jsonify({"success": False, "message": f"Указанная группа '{group_name}' не найдена в базе данных"}), 400
 
-    new_user = User(
-        roleID=2,
-        surname=surname,
-        name=name,
-        patronymic=patronymic,
-        login=login,
-        password=hashed_password,
-        genderID=gender_id,
-        groupID=group_id
-    )
-    db.session.add(new_user)
-    db.session.commit()
+        group_id = group_record.id
 
-    return jsonify({"success": True, "message": "Физорг добавлен успешно"}), 200
+        new_user = User(
+            roleID=2,
+            surname=surname,
+            name=name,
+            patronymic=patronymic,
+            login=login,
+            password=hashed_password,
+            genderID=gender_id,
+            groupID=group_id
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Физорг успешно добавлен"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/get_groups', methods=['GET'])
+def get_groups():
+    groups = Group.query.all()
+    groups_list = [{'id': group.id, 'name': group.name} for group in groups]
+    return jsonify({'groups': groups_list})
 
 @app.route('/api/profile_picture', methods=['POST'])
 def upload_profile_picture():
@@ -507,44 +615,71 @@ def delete_profile_picture():
         return jsonify({"success": True, "message": "Фото профиля удалено успешно"}), 200
     return jsonify({"error": "Пользователь не найден"}), 404
 
-@app.route('/api/add_award', methods=['POST'])
-def add_award():
-    name = request.form['name']
-    recipient = request.form['recipient']
-    image = request.files.get('image')
+@app.route('/add_award.php', methods=['POST'])
+def add_award_route():
+    name = request.form.get('award_name')
+    recipient = request.form.get('recipient')
+    image_file = request.files.get('award_image')
 
-    if image:
-        img = Image.open(image.stream)
-        img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format='JPEG')
-        img_byte_arr = img_byte_arr.getvalue()
-    else:
-        img_byte_arr = None
+    if not image_file or image_file.filename == '':
+        return jsonify({'error': 'Фото не выбрано'}), 400
 
-    new_award = Award(name=name, recipient=recipient, image=img_byte_arr)
+    try:
+        # Сохраняем изображение и получаем его URL
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+
+        unique_filename = f"award_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.jpg"
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        image_file.save(save_path)
+        image_url = f"static/uploads/{unique_filename}"
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    new_award = Award(name=name, recipient=recipient, imageURL=image_url)
     db.session.add(new_award)
     db.session.commit()
 
-    return jsonify({"success": True, "message": "Награда добавлена успешно"}), 200
+    return jsonify({'success': True, 'message': 'Награда добавлена успешно'}), 200
+
+@app.route('/api/delete_award', methods=['POST'])
+def delete_award():
+    data = request.get_json()
+    award_id = data.get('id')
+    award = Award.query.get(award_id)
+    if award:
+        db.session.delete(award)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Награда успешно удалена"})
+    else:
+        return jsonify({"success": False, "message": "Награда не найдена"})
 
 @app.route('/api/update_statistics', methods=['POST'])
 def update_statistics():
     data = request.get_json()
-    command_id = data.get('command_id')
-    is_win = data.get('is_win')
+    sport_type_id = data.get('sport_type')
+    team_id = data.get('team_select')
+    result = data.get('result')
 
-    with app.app_context():
-        stats = TeamStatistics.query.filter_by(commandID=command_id).first()
-        if stats:
-            if is_win:
-                stats.wins += 1
-            else:
-                stats.losses += 1
-            stats.activities += 1
-            db.session.commit()
-            return jsonify({'success': True, 'message': 'Статистика обновлена'})
-        else:
-            return jsonify({'success': False, 'message': 'Статистика не найдена'}), 404
+    command = Command.query.get(team_id)
+    if not command:
+        return jsonify({'success': False, 'message': 'Команда не найдена'})
+
+    stats = TeamStatistics.query.filter_by(commandID=team_id).first()
+    if not stats:
+        stats = TeamStatistics(commandID=team_id, wins=0, losses=0, activities=0)
+        db.session.add(stats)
+        db.session.flush()
+
+    if result == 'win':
+        stats.wins += 1
+    elif result == 'lose':
+        stats.losses += 1
+    stats.activities += 1
+
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Статистика успешно обновлена'})
 
 @app.route('/api/get_statistics', methods=['GET'])
 def get_statistics():
@@ -563,13 +698,82 @@ def get_commands():
         desc(TeamStatistics.wins + TeamStatistics.activities)
     ).all()
 
-    commands_data = [{'name': command.name} for command in commands]
+    commands_data = [{'id': command.id, 'name': command.name} for command in commands]
 
     return jsonify({'commands': commands_data})
+
+@app.route('/api/get_physorgs', methods=['GET'])
+def get_physorgs():
+    physorgs = User.query.filter_by(roleID=2).all()
+    physorgs_list = [{
+        'id': physorg.id,
+        'surname': physorg.surname,
+        'name': physorg.name,
+        'patronymic': physorg.patronymic
+    } for physorg in physorgs]
+    return jsonify({'physorgs': physorgs_list})
+
+@app.route('/api/get_awards', methods=['GET'])
+def get_awards():
+    awards = Award.query.all()
+    awards_list = [{'id': award.id, 'name': award.name} for award in awards]
+    return jsonify({'awards': awards_list})
+
+@app.route('/upload.php', methods=['POST'])
+def upload_media():
+    title = request.form.get('title')
+    course_id = request.form.get('course')
+    sport_type_id = request.form.get('sport_type')
+
+    files = request.files.getlist('media_files[]')
+
+    if not files or files[0].filename == '':
+        return jsonify({'error': 'Файлы не выбраны'}), 400
+
+    file_paths = []
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            unique_filename = f"media_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{filename}"
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            file.save(save_path)
+            file_paths.append(f"static/uploads/{unique_filename}")
+
+    for file_path in file_paths:
+        new_media = Media(title=title, mediaUrl=file_path, sportTypeID=sport_type_id)
+        db.session.add(new_media)
+
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Фото добавлены успешно'}), 200
+
+@app.route('/api/delete_physorg', methods=['POST'])
+def delete_physorg():
+    data = request.get_json()
+    physorg_id = data.get('id')
+    physorg = User.query.get(physorg_id)
+    if physorg:
+        db.session.delete(physorg)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Физорг успешно удален"})
+    else:
+        return jsonify({"success": False, "message": "Физорг не найден"})
+
+@app.route('/api/delete_team', methods=['POST'])
+def delete_team():
+    data = request.get_json()
+    team_id = data.get('id')
+    team = Command.query.get(team_id)
+    if team:
+        db.session.delete(team)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Команда успешно удалена"})
+    else:
+        return jsonify({"success": False, "message": "Команда не найдена"})
+
 
 if __name__ == '__main__':
     if os.getenv('FLASK_ENV') != 'testing':
         update_user_password('admin', 'admin')
-        update_user_password('isp-21p', '12345678')
 
     app.run(debug=True)

@@ -1,26 +1,45 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, Text, Date, Boolean, Time
+from sqlalchemy import Column, Integer, String, LargeBinary, ForeignKey, Text, Date, Time, DateTime
 from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
 class User(db.Model):
     __tablename__ = 'User'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     roleID = Column(Integer, ForeignKey('Role.id'), nullable=False)
     surname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    login = Column(String(50), nullable=False)
+    login = Column(String(50), nullable=False, unique=True)
     password = Column(Text, nullable=False)
     image = Column(LargeBinary, nullable=True)
-    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=True)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=False)
     groupID = Column(Integer, ForeignKey('Group.id'), nullable=True)
     position = Column(String(50), nullable=True)
 
     role = relationship('Role', back_populates='users')
     gender = relationship('Gender', back_populates='users')
     group = relationship('Group', back_populates='users')
+
+class Request(db.Model):
+    __tablename__ = 'requests'
+    id = Column(Integer, primary_key=True)
+    team_name = Column(String(50), nullable=False)
+    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+    sport_type_id = Column(Integer, ForeignKey('sport_type.id'), nullable=False)
+    gender_id = Column(Integer, ForeignKey('gender.id'), nullable=False)
+    status = Column(String(20), default='pending')
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Связь с таблицей StudentInCommand
+    students = relationship("StudentInCommand", back_populates="request", cascade="all, delete-orphan")
+
+
+class Course(db.Model):
+    __tablename__ = 'Course'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(50), nullable=False)
 
 class Gender(db.Model):
     __tablename__ = 'Gender'
@@ -33,6 +52,13 @@ class Group(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(10), nullable=False)
     users = relationship('User', back_populates='group')
+
+class Award(db.Model):
+    __tablename__ = 'Award'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    recipient = Column(String(100), nullable=True)
+    imageURL = Column(String(255), nullable=True)
 
 class Role(db.Model):
     __tablename__ = 'Role'
@@ -52,8 +78,9 @@ class Command(db.Model):
     __tablename__ = 'Command'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=True)
-    courseID = Column(Integer, Foreign_key=True)
-    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=True)
+    courseID = Column(Integer, ForeignKey('Course.id'), nullable=False)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=False)
+    groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
     sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
 
 class Event(db.Model):
@@ -61,13 +88,14 @@ class Event(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     date = Column(Date, nullable=False)
-    location = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=True)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
     time = Column(Time, nullable=True)
-    eventTypeID = Column(Integer, ForeignKey('EventType.id'), nullable=True)
-    placeID = Column(Integer, ForeignKey('Place.id'), nullable=True)
+    eventTypeID = Column(Integer, ForeignKey('EventType.id'), nullable=False)
+    placeID = Column(Integer, ForeignKey('Place.id'), nullable=False)
     imageURL = Column(String(255), nullable=True)
+
+    place = relationship('Place', backref='events')
 
 class Media(db.Model):
     __tablename__ = 'Media'
@@ -85,21 +113,18 @@ class ScheduleSections(db.Model):
     coachName = Column(String(100), nullable=True)
 
 class StudentInCommand(db.Model):
-    __tablename__ = 'StudentInCommand'
+    __tablename__ = 'student_in_command'
     id = Column(Integer, primary_key=True)
     surname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
-    commandID = Column(Integer, ForeignKey('Command.id'), nullable=False)
-    date = Column(Date, nullable=False)
+    group_id = Column(Integer, ForeignKey('group.id'), nullable=False)
 
-class Award(db.Model):
-    __tablename__ = 'Award'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
-    recipient = Column(String(100), nullable=True)
-    image = Column(LargeBinary, nullable=True)
+    # Внешний ключ для связи с таблицей Request
+    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
+
+    # Связь с таблицей Request
+    request = relationship("Request", back_populates="students")
 
 class SportType(db.Model):
     __tablename__ = 'SportType'
