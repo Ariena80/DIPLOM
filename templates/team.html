@@ -380,7 +380,7 @@ footer {
 </div>
 
 <footer>
-    <p>&copy; Arieshka, 2024.</p>
+    <p>© Все права защищены Arieshka, 2025.</p>
 </footer>
 
 <script>
@@ -417,6 +417,24 @@ window.onclick = function(event) {
     })
     .catch(error => console.error('Ошибка загрузки команд:', error));
 
+fetch('/api/get_statistics')
+    .then(response => response.json())
+    .then(data => {
+        const tbody = document.querySelector('#commands-table tbody');
+        tbody.innerHTML = '';
+        data.statistics.forEach((stat, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${stat.name}</td>
+                <td>${stat.wins}</td>
+                <td>${stat.losses}</td>
+                <td>${stat.activities}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    })
+    .catch(error => console.error('Ошибка загрузки статистики:', error));
 </script>
 
 </body>

@@ -1,194 +1,258 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Красные волки</title>
-<!-- Подключение стилей и шрифтов -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}" />
-<link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Красные волки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
-<style>
-/* Ваши стили остаются без изменений */
-body {
-    font-family: 'Nunito', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-.main-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-    gap: 20px;
-    width: 100%;
-}
-.measure-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 60%;
-}
-.measure {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 10px;
-    align-items: center;
-}
-.measure-card {
-    display: flex;
-    background-color: #6b2376;
-    color: white;
-    border: 2px solid #5a0888;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 10px;
-    width: 100%;
-    box-sizing: border-box;
-}
-.measure-card .event-image {
-    width: 150px;
-    height: auto;
-    border-radius: 10px;
-    margin-right: 15px;
-}
-.measure-card .event-info {
-    flex: 1;
-}
-.measure-card h3, .measure-card p {
-    margin: 5px 0;
-}
-.measure-card h3 {
-    color: white;
-}
-.measure-card p {
-    color: #e0e0e0;
-}
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px;
-}
-.pagination button {
-    padding: 10px 15px;
-    background-color: #5a0888;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.pagination button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-.calendar {
-    width: 100%;
-    max-width: 400px;
-    background-color: #fff;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    display: flex;
-    flex-direction: column;
-    font-family: 'Nunito', sans-serif;
-}
-.calendar-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 25px;
-}
-.calendar-title {
-    font-size: 28px;
-    font-weight: bold;
-    color: #5a0888;
-    margin-bottom: 10px;
-}
-.calendar-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-.calendar-nav select {
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #5a0888;
-    background-color: #fff;
-    color: #5a0888;
-    font-family: 'Nunito', sans-serif;
-    cursor: pointer;
-}
-.calendar-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-weight: bold;
-    color: #5a0888;
-}
-.calendar-weekdays div {
-    padding: 12px;
-    font-size: 18px;
-}
-.calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-}
-.calendar-day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    background-color: #f9f9f9;
-    color: #333;
-    position: relative;
-}
-.calendar-day:hover {
-    background-color: #e0e0e0;
-    transform: scale(1.1);
-    z-index: 10;
-}
-.calendar-day.has-event {
-    background-color: #ffcc00;
-    color: #000;
-    font-weight: bold;
-}
-.calendar-day.today {
-    background-color: #5a0888;
-    color: white;
-    font-weight: bold;
-}
-footer {
-    background-color: #5a0888;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    margin-top: auto;
-}
-</style>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            gap: 20px;
+            width: 100%;
+        }
+        .measure-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 60%;
+        }
+        .measure {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+            align-items: center;
+        }
+        .measure-card {
+            display: flex;
+            background-color: #6b2376;
+            color: white;
+            border: 2px solid #5a0888;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .measure-card .event-image {
+            width: 150px;
+            height: auto;
+            border-radius: 10px;
+            margin-right: 15px;
+        }
+        .measure-card .event-info {
+            flex: 1;
+        }
+        .measure-card h3 {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .measure-card p {
+            color: #e0e0e0;
+            margin: 5px 0;
+        }
+        .measure-card .event-date {
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        .measure-card .event-location {
+            font-style: italic;
+            color: #a0d2eb;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .pagination button {
+            padding: 10px 15px;
+            background-color: #5a0888;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .pagination button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .calendar {
+            width: 100%;
+            max-width: 400px;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            font-family: 'Nunito', sans-serif;
+        }
+        .calendar-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .calendar-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #5a0888;
+            margin-bottom: 10px;
+        }
+        .calendar-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .calendar-nav select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #5a0888;
+            background-color: #fff;
+            color: #5a0888;
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #5a0888;
+        }
+        .calendar-weekdays div {
+            padding: 12px;
+            font-size: 18px;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+            color: #333;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        .calendar-day.has-event {
+            background-color: #ffcc00;
+            color: #000;
+            font-weight: bold;
+        }
+        .calendar-day.today {
+            background-color: #5a0888;
+            color: white;
+            font-weight: bold;
+        }
+        footer {
+            background-color: #5a0888;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-top: auto;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            width: 80%;
+            max-width: 900px;
+            border-radius: 10px;
+            display: flex;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .modal-image {
+            flex: 1;
+            padding: 10px;
+        }
+        .modal-image img {
+            width: 100%;
+            border-radius: 5px;
+        }
+        .modal-text {
+            flex: 1;
+            padding: 20px;
+        }
+        .modal-text h2 {
+            color: #5a0888;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .modal-text p {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -204,13 +268,32 @@ footer {
 </header>
 <div class="main-container">
     <div class="measure-container">
-        <h2 style="text-align: center;">Мероприятия</h2>
-        <div class="measure" id="events-container"></div>
-        <div class="pagination" id="pagination">
-            <button id="prev-page" disabled>Назад</button>
-            <button id="next-page">Вперед</button>
-        </div>
+    <h2 style="text-align: center;">Мероприятия</h2>
+    <div class="measure" id="events-container"></div>
+    <div class="pagination" id="pagination">
+        <button id="prev-page" disabled>Назад</button>
+        <button id="next-page">Вперед</button>
     </div>
+</div>
+
+
+<div class="measure-container" style="margin-top: 30px;">
+    <h2 style="text-align: center; color:#5a0888;">Расписание тренировок</h2>
+    <div style="background-color:#f0e6f6; padding:20px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:600px; margin:auto;">
+        <ul style="list-style: none; padding:0; margin:0; font-size:16px; color:#333;">
+            <li style="margin-bottom:10px;">
+                <strong style="color:#5a0888;">Понедельник:</strong> 18:00 - Тренировка по тактике
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong style="color:#5a0888;">Среда:</strong> 19:00 - Общая тренировка
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong style="color:#5a0888;">Пятница:</strong> 17:30 - Тренировка по физической подготовке
+            </li>
+        </ul>
+    </div>
+</div>
+
     <section class="calendar">
         <div class="calendar-header">
             <div class="calendar-title" id="calendar-title">Календарь</div>
@@ -248,9 +331,30 @@ footer {
         <div class="calendar-days" id="calendar-days"></div>
     </section>
 </div>
+
+<!-- Модальное окно -->
+<div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <div style="display: flex; width: 100%;">
+            <div class="modal-image">
+                <img id="modalImage" src="" alt="Event Image">
+            </div>
+            <div class="modal-text">
+                <h2 id="modalTitle"></h2>
+                <p id="modalDescription"></p>
+                <p id="modalDate"></p>
+                <p id="modalLocation"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <footer>
-    <p>© Arieshka, 2024.</p>
+    <p>© Все права защищены Arieshka, 2025.</p>
 </footer>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const calendarDays = document.getElementById('calendar-days');
@@ -310,15 +414,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadEvents() {
         fetch('/api/get_events')
             .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
                 return response.json();
             })
             .then(data => {
                 console.log('Received data:', data);
-                if (data) {
-                    allEvents = data;
-                    currentPage = 0; // сброс страницы при новой загрузке
-                    filterAndRenderEvents();
+                if (data && Array.isArray(data.events)) {
+                    allEvents = data.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    currentPage = 0;
+                    renderEvents(allEvents);
                     highlightDaysWithEvents();
                 } else {
                     console.error('Invalid data format:', data);
@@ -327,19 +433,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Ошибка при загрузке событий:', error);
-                eventsContainer.innerHTML = '<p>Ошибка при загрузке мероприятий.</p>';
+                eventsContainer.innerHTML = `<p>Ошибка при загрузке мероприятий: ${error.message}</p>`;
             });
-    }
-
-    // Фильтрация событий по дате
-    function filterAndRenderEvents() {
-        const today = new Date();
-        const filteredEvents = allEvents.filter(event => {
-            const eventDate = new Date(event.event_date);
-            return eventDate >= today;
-        });
-        console.log('Filtered events:', filteredEvents);
-        renderEvents(filteredEvents);
     }
 
     // Подсветка дней, в которые есть события
@@ -356,9 +451,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!dayDate) return;
 
             const hasEvent = allEvents.some(event => {
-                const eventDateStr = new Date(event.event_date).toISOString().split('T')[0];
+                const eventDate = new Date(event.date);
+                const eventDateStr = eventDate.toISOString().split('T')[0];
                 return eventDateStr === dayDate;
             });
+
             if (hasEvent) {
                 day.classList.add('has-event');
                 day.addEventListener('click', () => {
@@ -370,25 +467,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Показывать события на выбранный день
     function showEventsForDay(dayDate) {
-        eventsContainer.innerHTML = '';
         const dayEvents = allEvents.filter(event => {
-            const eventDateStr = new Date(event.event_date).toISOString().split('T')[0];
+            const eventDate = new Date(event.date);
+            const eventDateStr = eventDate.toISOString().split('T')[0];
             return eventDateStr === dayDate;
         });
+
         if (dayEvents.length > 0) {
-            dayEvents.forEach(event => {
-                const eventElement = document.createElement('div');
-                eventElement.className = 'measure-card';
-                eventElement.innerHTML = `
-                    <img src="${event.imageURL || 'https://via.placeholder.com/150'}" alt="Event Image" class="event-image" />
-                    <div class="event-info">
-                        <h3>${event.event_name || 'Нет названия'}</h3>
-                        <p>${event.description || 'Нет описания'}</p>
-                        <p>${new Date(event.event_date).toLocaleString()}</p>
-                        <p>Место: ${event.location || 'Не указано'}</p>
-                    </div>`;
-                eventsContainer.appendChild(eventElement);
-            });
+            renderEvents(dayEvents);
         } else {
             eventsContainer.innerHTML = '<p>Нет мероприятий на этот день.</p>';
         }
@@ -407,16 +493,22 @@ document.addEventListener('DOMContentLoaded', function() {
             eventsContainer.innerHTML = '<p>Нет мероприятий для отображения.</p>';
         } else {
             paginatedEvents.forEach(event => {
+                const eventDate = new Date(event.date);
+                const formattedDate = eventDate.toLocaleDateString('ru-RU');
+                const formattedTime = event.time ? event.time.substring(0, 5) : 'Не указано';
+
                 const eventElement = document.createElement('div');
                 eventElement.className = 'measure-card';
                 eventElement.innerHTML = `
                     <img src="${event.imageURL || 'https://via.placeholder.com/150'}" alt="Event Image" class="event-image" />
                     <div class="event-info">
-                        <h3>${event.event_name || 'Нет названия'}</h3>
+                        <h3>${event.name || 'Нет названия'}</h3>
                         <p>${event.description || 'Нет описания'}</p>
-                        <p>${new Date(event.event_date).toLocaleString()}</p>
-                        <p>Место: ${event.location || 'Не указано'}</p>
+                        <p class="event-date">Дата: ${formattedDate}</p>
+                        <p class="event-date">Время: ${formattedTime}</p>
+                        <p class="event-location">Место: ${event.place || 'Не указано'}</p>
                     </div>`;
+                eventElement.addEventListener('click', () => openModal(event));
                 eventsContainer.appendChild(eventElement);
             });
         }
@@ -424,6 +516,33 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновляем состояние кнопок пагинации
         prevPageButton.disabled = currentPage === 0;
         nextPageButton.disabled = (currentPage + 1) * eventsPerPage >= events.length;
+    }
+
+    // Открытие модального окна
+    function openModal(event) {
+        const eventDate = new Date(event.date);
+        const formattedTime = eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const formattedDate = eventDate.toLocaleDateString('ru-RU');
+
+        document.getElementById('modalTitle').textContent = event.name || 'Нет названия';
+        document.getElementById('modalDescription').textContent = event.description || 'Нет описания';
+        document.getElementById('modalDate').textContent = `Дата: ${formattedDate}, Время: ${formattedTime}`;
+        document.getElementById('modalLocation').textContent = `Место: ${event.place || 'Не указано'}`;
+        document.getElementById('modalImage').src = event.imageURL || 'https://via.placeholder.com/150';
+        document.getElementById('eventModal').style.display = 'flex';
+    }
+
+    // Закрытие модального окна
+    function closeModal() {
+        document.getElementById('eventModal').style.display = 'none';
+    }
+
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        const modal = document.getElementById('eventModal');
+        if (event.target == modal) {
+            closeModal();
+        }
     }
 
     // Обработчики смены месяца и года
@@ -443,22 +562,14 @@ document.addEventListener('DOMContentLoaded', function() {
     prevPageButton.addEventListener('click', () => {
         if (currentPage > 0) {
             currentPage--;
-            const filteredEvents = allEvents.filter(event => {
-                const eventDate = new Date(event.event_date);
-                return eventDate >= new Date();
-            });
-            renderEvents(filteredEvents);
+            renderEvents(allEvents);
         }
     });
 
     nextPageButton.addEventListener('click', () => {
-        const filteredEvents = allEvents.filter(event => {
-            const eventDate = new Date(event.event_date);
-            return eventDate >= new Date();
-        });
-        if ((currentPage + 1) * eventsPerPage < filteredEvents.length) {
+        if ((currentPage + 1) * eventsPerPage < allEvents.length) {
             currentPage++;
-            renderEvents(filteredEvents);
+            renderEvents(allEvents);
         }
     });
 
@@ -472,37 +583,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Запуск
     init();
 });
-
-let allEvents = [];
-function loadEvents() {
-    fetch('/api/get_events')
-        .then(response => response.json())
-        .then(data => {
-            if (data && Array.isArray(data.events)) {
-                allEvents = data.events; // присваиваем массив
-                currentPage = 0;
-                filterAndRenderEvents();
-            } else {
-                allEvents = [];
-                renderEvents([]);
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            allEvents = [];
-            renderEvents([]);
-        });
-}
-
-function filterAndRenderEvents() {
-    const today = new Date();
-    const filteredEvents = allEvents.filter(event => {
-        const eventDate = new Date(event.event_date);
-        return eventDate >= today;
-    });
-    renderEvents(filteredEvents);
-}
-
 </script>
 </body>
 </html>

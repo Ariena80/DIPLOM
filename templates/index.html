@@ -474,6 +474,24 @@
         </div>
     </div>
 
+<div class="measure-container" style="margin-top: 30px;">
+    <h2 style="text-align: center; color:#5a0888;">Расписание тренировок</h2>
+    <div style="background-color:#f0e6f6; padding:20px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:600px; margin:auto;">
+        <ul style="list-style: none; padding:0; margin:0; font-size:16px; color:#333;">
+            <li style="margin-bottom:10px;">
+                <strong style="color:#5a0888;">Понедельник:</strong> 18:00 - Тренировка по тактике
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong style="color:#5a0888;">Среда:</strong> 19:00 - Общая тренировка
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong style="color:#5a0888;">Пятница:</strong> 17:30 - Тренировка по физической подготовке
+            </li>
+        </ul>
+    </div>
+</div>
+
+
     <div id="newsModal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="closeModal()">&times;</span>
@@ -490,9 +508,8 @@
     </div>
 
     <footer>
-        <p>&COPY; Arieshka, 2024.</p>
-    </footer>
-
+    <p>© Все права защищены Arieshka, 2025.</p>
+</footer>
 <script>
     // Удаляем статические данные новостей, так как они будут загружаться из базы данных
     document.addEventListener('DOMContentLoaded', function() {
@@ -654,6 +671,24 @@
             document.body.classList.toggle('dark-theme');
         });
     });
+    fetch('/api/get_statistics')
+    .then(response => response.json())
+    .then(data => {
+        const tbody = document.querySelector('#commands-table tbody');
+        tbody.innerHTML = '';
+        data.statistics.forEach((stat, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${stat.name}</td>
+                <td>${stat.wins}</td>
+                <td>${stat.losses}</td>
+                <td>${stat.activities}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    })
+    .catch(error => console.error('Ошибка загрузки статистики:', error));
 </script>
 
 </body>
