@@ -21,20 +21,21 @@ class User(db.Model):
     role = relationship('Role', back_populates='users')
     gender = relationship('Gender', back_populates='users')
     group = relationship('Group', back_populates='users')
-
+    
 class Request(db.Model):
-    __tablename__ = 'requests'
+    __tablename__ = 'Request'
     id = Column(Integer, primary_key=True)
-    team_name = Column(String(50), nullable=False)
-    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
-    sport_type_id = Column(Integer, ForeignKey('sport_type.id'), nullable=False)
-    gender_id = Column(Integer, ForeignKey('gender.id'), nullable=False)
+    teamName = Column(String(50), nullable=False)
+    eventID = Column(Integer, ForeignKey('Event.id'), nullable=False)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=False)
     status = Column(String(20), default='pending')
-    created_at = Column(DateTime, default=datetime.utcnow)
+    userID = Column(Integer, ForeignKey('User.id'), nullable=False)
 
-    # Связь с таблицей StudentInCommand
     students = relationship("StudentInCommand", back_populates="request", cascade="all, delete-orphan")
-
+    event = relationship("Event", back_populates="requests")
+    sportType = relationship("SportType")
+    user = relationship("User")
 
 class Course(db.Model):
     __tablename__ = 'Course'
@@ -89,13 +90,14 @@ class Event(db.Model):
     name = Column(String(255), nullable=False)
     date = Column(Date, nullable=False)
     description = Column(Text, nullable=True)
-    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=True)
     time = Column(Time, nullable=True)
-    eventTypeID = Column(Integer, ForeignKey('EventType.id'), nullable=False)
-    placeID = Column(Integer, ForeignKey('Place.id'), nullable=False)
+    eventTypeID = Column(Integer, ForeignKey('EventType.id'), nullable=True)
+    placeID = Column(Integer, ForeignKey('Place.id'), nullable=True)
     imageURL = Column(String(255), nullable=True)
 
     place = relationship('Place', backref='events')
+    requests = relationship("Request", back_populates="event")
 
 class Media(db.Model):
     __tablename__ = 'Media'
@@ -113,15 +115,14 @@ class ScheduleSections(db.Model):
     coachName = Column(String(100), nullable=True)
 
 class StudentInCommand(db.Model):
-    __tablename__ = 'student_in_command'
+    __tablename__ = 'StudentInCommand'
     id = Column(Integer, primary_key=True)
     surname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    group_id = Column(Integer, ForeignKey('group.id'), nullable=False)
-
-    # Внешний ключ для связи с таблицей Request
-    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
+    groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
+    requestID = Column(Integer, ForeignKey('Request.id'), nullable=False)
+    commandID = Column(Integer, ForeignKey('Command.id'), nullable=True)  
 
     # Связь с таблицей Request
     request = relationship("Request", back_populates="students")

@@ -18,7 +18,7 @@ from flask_migrate import Migrate
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@DESKTOP-VF9RI0P\SQLEXPRESS/REDWOLFS?driver=ODBC+Driver+17+for+SQL+Server'
-app.config['SECRET_KEY'] = 'dde8a6ba4fdf7dbecb55874b5c03d02fd575d5ad4623e70c'
+app.config['SECRET_KEY'] = 'your_secret_key_here'
 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -34,7 +34,7 @@ migrate = Migrate(app, db)
 try:
     with app.app_context():
         db.session.execute(text("SELECT 1"))
-        print("Подключение к базе данных успешно!")
+    print("Подключение к базе данных успешно!")
 except OperationalError as e:
     print(f"Ошибка подключения к базе данных: {e}")
 
@@ -60,18 +60,19 @@ class User(db.Model):
     group = relationship('Group', back_populates='users')
 
 class Request(db.Model):
-    __tablename__ = 'requests'
+    __tablename__ = 'Request'
     id = Column(Integer, primary_key=True)
-    team_name = Column(String(50), nullable=False)
-    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
-    sport_type_id = Column(Integer, ForeignKey('sport_type.id'), nullable=False)
-    gender_id = Column(Integer, ForeignKey('gender.id'), nullable=False)
+    teamName = Column(String(50), nullable=False)
+    eventID = Column(Integer, ForeignKey('Event.id'), nullable=False)
+    sportTypeID = Column(Integer, ForeignKey('SportType.id'), nullable=False)
+    genderID = Column(Integer, ForeignKey('Gender.id'), nullable=False)
     status = Column(String(20), default='pending')
-    created_at = Column(DateTime, default=datetime.utcnow)
+    userID = Column(Integer, ForeignKey('User.id'), nullable=False)
 
-    # Связь с таблицей StudentInCommand
     students = relationship("StudentInCommand", back_populates="request", cascade="all, delete-orphan")
-
+    event = relationship("Event", back_populates="requests")
+    sportType = relationship("SportType")
+    user = relationship("User")
 
 class Course(db.Model):
     __tablename__ = 'Course'
@@ -143,6 +144,7 @@ class Event(db.Model):
     imageURL = Column(String(255), nullable=True)
 
     place = relationship('Place', backref='events')
+    requests = relationship("Request", back_populates="event")
 
 class Media(db.Model):
     __tablename__ = 'Media'
@@ -160,17 +162,15 @@ class ScheduleSections(db.Model):
     coachName = Column(String(100), nullable=True)
 
 class StudentInCommand(db.Model):
-    __tablename__ = 'student_in_command'
+    __tablename__ = 'StudentInCommand'
     id = Column(Integer, primary_key=True)
     surname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    group_id = Column(Integer, ForeignKey('group.id'), nullable=False)
+    groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
+    requestID = Column(Integer, ForeignKey('Request.id'), nullable=False)
+    commandID = Column(Integer, ForeignKey('Command.id'), nullable=True)
 
-    # Внешний ключ для связи с таблицей Request
-    request_id = Column(Integer, ForeignKey('requests.id'), nullable=False)
-
-    # Связь с таблицей Request
     request = relationship("Request", back_populates="students")
 
 class SportType(db.Model):
@@ -209,6 +209,31 @@ def update_user_password(login, plain_password):
             logging.debug(f"Пароль обновлен для пользователя {user.login}")
         else:
             logging.debug("Пользователь не найден")
+
+def update_team_statistics(team_id, points):
+    if team_id is None:
+        return {'success': False, 'message': 'Некорректный ID команды'}
+
+    team = db.session.get(Command, team_id)
+    if not team:
+        return {'success': False, 'message': 'Команда не найдена'}
+
+    stats = TeamStatistics.query.filter_by(commandID=team_id).first()
+    if not stats:
+        stats = TeamStatistics(commandID=team_id, wins=0, losses=0, activities=0)
+        db.session.add(stats)
+        db.session.flush()
+
+    if points == 3:
+        stats.wins += 3
+    elif points == 2:
+        stats.wins += 2
+    elif points == 1:
+        stats.wins += 1
+
+    stats.activities += 1
+    db.session.commit()
+    return {'success': True, 'message': 'Статистика успешно обновлена'}
 
 @app.route('/')
 def home():
@@ -386,46 +411,140 @@ def get_locations():
 
 @app.route('/api/add_team_request', methods=['POST'])
 def add_team_request():
-    try:
-        data = request.get_json()
-        team_name = data.get('team_name')
-        sport_type_id = data.get('sport_type')
-        gender_id = data.get('gender')
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Пользователь не авторизован'}), 401
 
-        new_request = Request(
-            team_name=team_name,
-            sport_type_id=sport_type_id,
-            gender_id=gender_id
+    data = request.get_json()
+    logging.debug(f"Received data: {data}")
+
+    if not all(key in data for key in ['team_name', 'event_id', 'sport_type', 'gender']):
+        return jsonify({"success": False, "message": "Отсутствуют обязательные поля"}), 400
+
+    teamName = data.get('team_name')
+    eventID = data.get('event_id')
+    sportTypeID = data.get('sport_type')
+    genderID = data.get('gender')
+    team_members = data.get('team_members', [])
+    reserve_member = data.get('reserve_member')
+
+    new_request = Request(
+        teamName=teamName,
+        eventID=eventID,
+        sportTypeID=sportTypeID,
+        genderID=genderID,
+        status='pending',
+        userID=user_id
+    )
+
+    db.session.add(new_request)
+    db.session.commit()
+
+    def parse_member(member):
+        if isinstance(member, dict):
+            return member
+        elif isinstance(member, str):
+            parts = member.split()
+            return {
+                'surname': parts[0] if len(parts) > 0 else '',
+                'name': parts[1] if len(parts) > 1 else '',
+                'patronymic': parts[2] if len(parts) > 2 else '',
+                'group_id': 1
+            }
+        else:
+            raise ValueError("Member data should be either a dictionary or a string")
+
+    for member in team_members:
+        member_data = parse_member(member)
+        new_member = StudentInCommand(
+            surname=member_data['surname'],
+            name=member_data['name'],
+            patronymic=member_data['patronymic'],
+            groupID=member_data['group_id'],
+            requestID=new_request.id,
+            commandID=1
         )
+        db.session.add(new_member)
 
-        db.session.add(new_request)
-        db.session.commit()
+    if reserve_member:
+        reserve_member_data = parse_member(reserve_member)
+        new_reserve_member = StudentInCommand(
+            surname=reserve_member_data['surname'],
+            name=reserve_member_data['name'],
+            patronymic=reserve_member_data['patronymic'],
+            groupID=reserve_member_data['group_id'],
+            requestID=new_request.id,
+            commandID=1
+        )
+        db.session.add(new_reserve_member)
 
-        return jsonify({"success": True, "message": "Заявка на команду добавлена успешно"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "message": str(e)}), 500
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Заявка на команду добавлена успешно"}), 200
 
 @app.route('/api/get_requests', methods=['GET'])
 def get_requests():
-    requests = Request.query.all()
-    requests_list = [{
-        'id': req.id,
-        'team_name': req.team_name,
-        'sport_type': req.sport_type_id,
-        'gender': req.gender_id,
-        'status': req.status
-    } for req in requests]
-    return jsonify({'requests': requests_list})
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Пользователь не авторизован'}), 401
+
+    try:
+        requests = Request.query.filter_by(userID=user_id).options(joinedload(Request.event), joinedload(Request.sportType)).all()
+        requests_list = [{
+            'id': req.id,
+            'team_name': req.teamName,
+            'event_name': req.event.name if req.event else 'Не указано',
+            'sport_type_name': req.sportType.name if req.sportType else 'Не указан',
+            'gender': req.genderID,
+            'status': req.status,
+            'team_members': [{'surname': student.surname, 'name': student.name, 'patronymic': student.patronymic} for student in req.students]
+        } for req in requests]
+        return jsonify({'requests': requests_list})
+    except Exception as e:
+        logging.error(f"Error in get_requests: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/update_team_members', methods=['POST'])
+def update_team_members():
+    data = request.get_json()
+    request_id = data.get('request_id')
+    team_members = data.get('team_members', [])
+
+    try:
+        db_request = Request.query.get(request_id)
+        if not db_request:
+            return jsonify({"success": False, "message": "Заявка не найдена"}), 404
+
+        # Clear existing students
+        StudentInCommand.query.filter_by(requestID=request_id).delete()
+
+        # Add new students
+        for member in team_members:
+            parts = member.split()
+            new_member = StudentInCommand(
+                surname=parts[0] if len(parts) > 0 else '',
+                name=parts[1] if len(parts) > 1 else '',
+                patronymic=parts[2] if len(parts) > 2 else '',
+                groupID=1,  # Assuming groupID is 1 for simplicity
+                requestID=request_id,
+                commandID=1  # Assuming commandID is 1 for simplicity
+            )
+            db.session.add(new_member)
+
+        db.session.commit()
+        return jsonify({"success": True, "message": "Игроки успешно обновлены"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/approve_request', methods=['POST'])
 def approve_request():
     data = request.get_json()
     request_id = data.get('id')
 
-    request = Request.query.get(request_id)
-    if request:
-        request.status = 'approved'
+    db_request = Request.query.get(request_id)
+    if db_request:
+        db_request.status = 'approved'
         db.session.commit()
         return jsonify({"success": True, "message": "Заявка одобрена"})
     else:
@@ -478,7 +597,6 @@ def add_event():
     else:
         return jsonify({'success': False, 'message': 'Отсутствуют обязательные поля'}), 400
 
-
 @app.route('/api/get_events', methods=['GET'])
 def get_events():
     try:
@@ -525,7 +643,6 @@ def add_physorg():
         login = request.form['login']
         password = request.form['password']
 
-        # Проверка на существование пользователя с таким же логином
         existing_user = User.query.filter_by(login=login).first()
         if existing_user:
             return jsonify({"success": False, "message": "Пользователь с таким логином уже существует"}), 400
@@ -558,7 +675,6 @@ def add_physorg():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
-
 
 @app.route('/api/get_groups', methods=['GET'])
 def get_groups():
@@ -658,28 +774,21 @@ def delete_award():
 @app.route('/api/update_statistics', methods=['POST'])
 def update_statistics():
     data = request.get_json()
-    sport_type_id = data.get('sport_type')
-    team_id = data.get('team_select')
-    result = data.get('result')
+    event_id = data.get('event_id')
+    first_place_id = data.get('first_place')
+    second_place_id = data.get('second_place')
+    third_place_id = data.get('third_place')
 
-    command = Command.query.get(team_id)
-    if not command:
-        return jsonify({'success': False, 'message': 'Команда не найдена'})
+    # Обновление статистики для команды, занявшей первое место
+    update_team_statistics(first_place_id, 3)
 
-    stats = TeamStatistics.query.filter_by(commandID=team_id).first()
-    if not stats:
-        stats = TeamStatistics(commandID=team_id, wins=0, losses=0, activities=0)
-        db.session.add(stats)
-        db.session.flush()
+    # Обновление статистики для команды, занявшей второе место
+    update_team_statistics(second_place_id, 2)
 
-    if result == 'win':
-        stats.wins += 1
-    elif result == 'lose':
-        stats.losses += 1
-    stats.activities += 1
+    # Обновление статистики для команды, занявшей третье место
+    update_team_statistics(third_place_id, 1)
 
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Статистика успешно обновлена'})
+    return jsonify({'success': True, 'message': 'Результаты успешно обновлены'})
 
 @app.route('/api/get_statistics', methods=['GET'])
 def get_statistics():
@@ -770,7 +879,6 @@ def delete_team():
         return jsonify({"success": True, "message": "Команда успешно удалена"})
     else:
         return jsonify({"success": False, "message": "Команда не найдена"})
-
 
 if __name__ == '__main__':
     if os.getenv('FLASK_ENV') != 'testing':
