@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/dark theme.js') }}" defer></script>
-
 </head>
 <body>
     <header>
@@ -34,10 +33,6 @@
             <button type="button" onclick="loginUser()">Войти</button>
         </form>
     </div>
-    <footer>
-        <p>© Все права защищены Arieshka, 2025.</p>
-    </footer>
-
     <script>
         function loginUser() {
             const login = document.getElementById('login').value;

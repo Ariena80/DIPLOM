@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Nunito', sans-serif;
@@ -130,16 +131,14 @@
             color: red;
         }
 
+       /* Подвал сайта */
         footer {
-            background-color: #333;
-            color: white;
             text-align: center;
-            padding: 10px;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 0;
+            height: 3%;
         }
-
         .profile-info-row {
             margin-bottom: 10px;
         }
@@ -250,21 +249,17 @@
                 <div class="profile-info">
                     <div class="profile-info-row">
                         <div class="profile-info-item">
-                            <label>Фамилия:</label>
                             <p id="surname"></p>
                         </div>
                         <div class="profile-info-item">
-                            <label>Имя:</label>
                             <p id="first_name"></p>
                         </div>
                         <div class="profile-info-item">
-                            <label>Отчество:</label>
                             <p id="middle_name"></p>
                         </div>
                     </div>
                     <div class="profile-info-row">
                         <div class="profile-info-item">
-                            <label>Должность:</label>
                             <p id="position"></p>
                         </div>
                     </div>
@@ -551,492 +546,491 @@
                 </div>
                 <div class="order-template" id="orderTemplate">
                     <h3>Распоряжение</h3>
-                    <textarea id="orderText" rows="10" cols="50" readonly></textarea>
+                    <textarea id="orderText" rows="10" cols="50"></textarea>
+                    <button onclick="editOrder()">Редактировать</button>
                     <button onclick="downloadOrder()">Скачать распоряжение</button>
                 </div>
             </div>
-        </div>
     </div>
     <footer>
-        <p>© Все права защищены Arieshka, 2025.</p>
+        <p>© А.И.Морозова Все права защищены, 2025.</p>
     </footer>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetchUserData();
-            setupSidebarButtons();
-            setupLogoutButton();
-            setupFormHandlers();
-            fetchNews();
-            setupProfilePictureUpload();
-            setupInactivityTimer();
-            fetchGroups();
-            fetchSportTypes();
-            fetchGenders();
-            fetchEventTypes();
-            fetchLocations();
-            fetchAwards();
-            fetchCommands();
-            fetchPhysOrgs();
-        });
+    fetchUserData();
+    setupSidebarButtons();
+    setupLogoutButton();
+    setupFormHandlers();
+    fetchNews();
+    setupProfilePictureUpload();
+    setupInactivityTimer();
+    fetchGroups();
+    fetchSportTypes();
+    fetchGenders();
+    fetchEventTypes();
+    fetchLocations();
+    fetchAwards();
+    fetchCommands();
+    fetchPhysOrgs();
+});
 
-        function fetchUserData() {
-            fetch('/api/user_data')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('surname').textContent = data.surname;
-                    document.getElementById('first_name').textContent = data.name;
-                    document.getElementById('middle_name').textContent = data.patronymic;
-                    const roleId = data.role;
-                    let position = '';
-                    if (roleId === 1) {
-                        position = 'Администратор';
-                    } else if (roleId === 2) {
-                        position = 'Физорг';
-                    }
-                    document.getElementById('position').textContent = position;
-                })
-                .catch(error => console.error('Error fetching user data:', error));
-        }
-
-        function setupSidebarButtons() {
-            document.querySelectorAll('.sidebar button').forEach(button => {
-                button.addEventListener('click', function() {
-                    const action = this.getAttribute('data-action');
-                    let formId;
-                    if (action === 'showTeamForm') formId = 'teamForm';
-                    else if (action === 'showPhysOrgForm') formId = 'physOrgForm';
-                    else if (action === 'showMediaForm') formId = 'mediaForm';
-                    else if (action === 'showEventForm') formId = 'eventForm';
-                    else if (action === 'showEditStatisticForm') formId = 'editStatisticForm';
-                    else if (action === 'showNewsForm') formId = 'newsForm';
-                    else if (action === 'showAwardsForm') formId = 'awardsForm';
-                    else if (action === 'showApproveRequests') {
-                        formId = 'approveRequestsForm';
-                        fetchRequests();
-                    }
-                    showForm(formId);
-                });
-            });
-        }
-
-        function showForm(formId) {
-            const forms = document.querySelectorAll('.content');
-            forms.forEach(form => {
-                form.style.display = 'none';
-            });
-            const formToShow = document.getElementById(formId);
-            if (formToShow) {
-                formToShow.style.display = 'block';
-                if (formId === 'editStatisticForm') {
-                    fetchEvents();
-                    fetchTeams();
-                }
+function fetchUserData() {
+    fetch('/api/user_data')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('surname').textContent = data.surname;
+            document.getElementById('first_name').textContent = data.name;
+            document.getElementById('middle_name').textContent = data.patronymic;
+            const roleId = data.role;
+            let position = '';
+            if (roleId === 1) {
+                position = 'Администратор';
+            } else if (roleId === 2) {
+                position = 'Физорг';
             }
+            document.getElementById('position').textContent = position;
+        })
+        .catch(error => console.error('Error fetching user data:', error));
+}
+
+function setupSidebarButtons() {
+    document.querySelectorAll('.sidebar button').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            let formId;
+            if (action === 'showTeamForm') formId = 'teamForm';
+            else if (action === 'showPhysOrgForm') formId = 'physOrgForm';
+            else if (action === 'showMediaForm') formId = 'mediaForm';
+            else if (action === 'showEventForm') formId = 'eventForm';
+            else if (action === 'showEditStatisticForm') formId = 'editStatisticForm';
+            else if (action === 'showNewsForm') formId = 'newsForm';
+            else if (action === 'showAwardsForm') formId = 'awardsForm';
+            else if (action === 'showApproveRequests') {
+                formId = 'approveRequestsForm';
+                fetchRequests();
+            }
+            showForm(formId);
+        });
+    });
+}
+
+function showForm(formId) {
+    const forms = document.querySelectorAll('.content');
+    forms.forEach(form => {
+        form.style.display = 'none';
+    });
+    const formToShow = document.getElementById(formId);
+    if (formToShow) {
+        formToShow.style.display = 'block';
+        if (formId === 'editStatisticForm') {
+            fetchEvents();
+            fetchTeams();
         }
+    }
+}
 
-        function setupLogoutButton() {
-            document.getElementById('logoutButton').addEventListener('click', function() {
-                fetch('/api/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = 'login.html';
-                    } else {
-                        alert('Ошибка при выходе');
-                    }
-                })
-                .catch(error => console.error('Error logging out:', error));
-            });
-        }
+function setupLogoutButton() {
+    document.getElementById('logoutButton').addEventListener('click', function() {
+        fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = 'login.html';
+            } else {
+                alert('Ошибка при выходе');
+            }
+        })
+        .catch(error => console.error('Error logging out:', error));
+    });
+}
 
-        function setupFormHandlers() {
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    const submitButton = form.querySelector('input[type="submit"]');
-                    submitButton.disabled = true;
-                    const formData = new FormData(form);
-                    const action = form.getAttribute('action');
-                    fetch(action, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Данные успешно сохранены');
-                            form.reset();
-                        } else {
-                            alert('Ошибка при сохранении данных: ' + data.message);
-                        }
-                    })
-                    .catch(error => console.error('Ошибка:', error))
-                    .finally(() => {
-                        submitButton.disabled = false;
-                    });
-                });
-            });
-        }
-
-        function fetchNews() {
-            fetch('/api/get_news')
-                .then(response => response.json())
-                .then(data => {
-                    const newsContainer = document.getElementById('news-container');
-                    newsContainer.innerHTML = '';
-                    data.news.forEach(newsItem => {
-                        const newsElement = document.createElement('div');
-                        newsElement.className = 'news-item';
-                        newsElement.innerHTML = `
-                            <h3>${newsItem.title}</h3>
-                            <p>${newsItem.description}</p>
-                            <p>Дата: ${new Date(newsItem.date).toLocaleDateString()}</p>
-                            ${newsItem.imageURL ? `<img src="/static/uploads/${newsItem.imageURL.split('/').pop()}" alt="Изображение новости" style="max-width: 100%; height: auto;">` : ''}
-                        `;
-                        newsContainer.appendChild(newsElement);
-                    });
-                })
-                .catch(error => console.error('Ошибка при получении новостей:', error));
-        }
-
-        function fetchEvents() {
-            fetch('/api/get_events')
-                .then(response => response.json())
-                .then(data => {
-                    const eventSelect = document.getElementById('event_select');
-                    eventSelect.innerHTML = '';
-                    data.events.forEach(event => {
-                        const option = document.createElement('option');
-                        option.value = event.id;
-                        option.textContent = event.name;
-                        eventSelect.appendChild(option);
-                    });
-                })
-                .catch(error => console.error('Error fetching events:', error));
-        }
-
-        function fetchTeams() {
-            fetch('/api/get_commands')
-                .then(response => response.json())
-                .then(data => {
-                    const firstPlaceSelect = document.getElementById('first_place');
-                    const secondPlaceSelect = document.getElementById('second_place');
-                    const thirdPlaceSelect = document.getElementById('third_place');
-                    [firstPlaceSelect, secondPlaceSelect, thirdPlaceSelect].forEach(select => {
-                        select.innerHTML = '';
-                        data.commands.forEach(command => {
-                            const option = document.createElement('option');
-                            option.value = command.id;
-                            option.textContent = command.name;
-                            select.appendChild(option);
-                        });
-                    });
-                })
-                .catch(error => console.error('Error fetching teams:', error));
-        }
-
-        function submitStatistic() {
-            const formData = {
-                event_id: document.getElementById('event_select').value,
-                first_place: document.getElementById('first_place').value,
-                second_place: document.getElementById('second_place').value,
-                third_place: document.getElementById('third_place').value
-            };
-
-            fetch('/api/update_statistics', {
+function setupFormHandlers() {
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.disabled = true;
+            const formData = new FormData(form);
+            const action = form.getAttribute('action');
+            fetch(action, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Результаты успешно обновлены');
+                    alert('Данные успешно сохранены');
+                    form.reset();
                 } else {
-                    alert('Ошибка при обновлении результатов: ' + data.message);
+                    alert('Ошибка при сохранении данных: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Ошибка:', error))
+            .finally(() => {
+                submitButton.disabled = false;
+            });
+        });
+    });
+}
+
+function fetchNews() {
+    fetch('/api/get_news')
+        .then(response => response.json())
+        .then(data => {
+            const newsContainer = document.getElementById('news-container');
+            newsContainer.innerHTML = '';
+            data.news.forEach(newsItem => {
+                const newsElement = document.createElement('div');
+                newsElement.className = 'news-item';
+                newsElement.innerHTML = `
+                    <h3>${newsItem.title}</h3>
+                    <p>${newsItem.description}</p>
+                    <p>Дата: ${new Date(newsItem.date).toLocaleDateString()}</p>
+                    ${newsItem.imageURL ? `<img src="/static/uploads/${newsItem.imageURL.split('/').pop()}" alt="Изображение новости" style="max-width: 100%; height: auto;">` : ''}
+                `;
+                newsContainer.appendChild(newsElement);
+            });
+        })
+        .catch(error => console.error('Ошибка при получении новостей:', error));
+}
+
+function fetchEvents() {
+    fetch('/api/get_events')
+        .then(response => response.json())
+        .then(data => {
+            const eventSelect = document.getElementById('event_select');
+            eventSelect.innerHTML = '';
+            data.events.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                option.textContent = event.name;
+                eventSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error fetching events:', error));
+}
+
+function fetchTeams() {
+    fetch('/api/get_commands')
+        .then(response => response.json())
+        .then(data => {
+            const firstPlaceSelect = document.getElementById('first_place');
+            const secondPlaceSelect = document.getElementById('second_place');
+            const thirdPlaceSelect = document.getElementById('third_place');
+            [firstPlaceSelect, secondPlaceSelect, thirdPlaceSelect].forEach(select => {
+                select.innerHTML = '';
+                data.commands.forEach(command => {
+                    const option = document.createElement('option');
+                    option.value = command.id;
+                    option.textContent = command.name;
+                    select.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching teams:', error));
+}
+
+function submitStatistic() {
+    const formData = {
+        event_id: document.getElementById('event_select').value,
+        first_place: document.getElementById('first_place').value,
+        second_place: document.getElementById('second_place').value,
+        third_place: document.getElementById('third_place').value
+    };
+
+    fetch('/api/update_statistics', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Результаты успешно обновлены');
+        } else {
+            alert('Ошибка при обновлении результатов: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Ошибка:', error));
+}
+
+function setupProfilePictureUpload() {
+    document.getElementById('profilePictureInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const cropCanvas = document.getElementById('cropCanvas');
+                    const ctx = cropCanvas.getContext('2d');
+                    cropCanvas.width = img.width;
+                    cropCanvas.height = img.height;
+                    ctx.drawImage(img, 0, 0, img.width, img.height);
+                    document.getElementById('uploadModal').style.display = 'block';
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('savePic').addEventListener('click', function() {
+        const fileInput = document.getElementById('profilePictureInput');
+        const formData = new FormData();
+        if (fileInput.files.length > 0) {
+            formData.append('profile_picture', fileInput.files[0]);
+            fetch('/api/profile_picture', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Фото профиля успешно загружено');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('previewImage').src = e.target.result;
+                        localStorage.setItem('profileImage', e.target.result);
+                    }
+                    reader.readAsDataURL(fileInput.files[0]);
+                    closeUploadModal();
+                } else {
+                    alert('Ошибка при загрузке фото: ' + data.error);
                 }
             })
             .catch(error => console.error('Ошибка:', error));
+        } else {
+            alert('Пожалуйста, выберите файл для загрузки.');
         }
+    });
 
-        function setupProfilePictureUpload() {
-            document.getElementById('profilePictureInput').addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.src = e.target.result;
-                        img.onload = function() {
-                            const cropCanvas = document.getElementById('cropCanvas');
-                            const ctx = cropCanvas.getContext('2d');
-                            cropCanvas.width = img.width;
-                            cropCanvas.height = img.height;
-                            ctx.drawImage(img, 0, 0, img.width, img.height);
-                            document.getElementById('uploadModal').style.display = 'block';
-                        }
-                    }
-                    reader.readAsDataURL(file);
-                }
+    const savedImage = localStorage.getItem('profileImage');
+    if (savedImage) {
+        document.getElementById('previewImage').src = savedImage;
+    }
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').style.display = 'none';
+}
+
+function setupInactivityTimer() {
+    const inactivityDuration = 3600000;
+    let inactivityTimeout;
+
+    function startInactivityTimer() {
+        inactivityTimeout = setTimeout(logoutDueToInactivity, inactivityDuration);
+    }
+
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimeout);
+        startInactivityTimer();
+    }
+
+    function logoutDueToInactivity() {
+        fetch('/api/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = 'login.html';
+            } else {
+                alert('Ошибка при автоматическом выходе');
+            }
+        })
+        .catch(error => console.error('Error logging out due to inactivity:', error));
+    }
+
+    document.addEventListener('mousemove', resetInactivityTimer);
+    document.addEventListener('keypress', resetInactivityTimer);
+    document.addEventListener('click', resetInactivityTimer);
+
+    startInactivityTimer();
+}
+
+function generatePassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    let password = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+        password += charset.charAt(Math.floor(Math.random() * n));
+    }
+    document.getElementById('password').value = password;
+}
+
+function fetchGroups() {
+    fetch('/api/get_groups')
+        .then(response => response.json())
+        .then(data => {
+            const groupSelects = document.querySelectorAll('#group');
+            groupSelects.forEach(select => {
+                select.innerHTML = '';
+                data.groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.name;
+                    option.textContent = group.name;
+                    select.appendChild(option);
+                });
             });
+        })
+        .catch(error => console.error('Error fetching groups:', error));
+}
 
-            document.getElementById('savePic').addEventListener('click', function() {
-                const fileInput = document.getElementById('profilePictureInput');
-                const formData = new FormData();
-                if (fileInput.files.length > 0) {
-                    formData.append('profile_picture', fileInput.files[0]);
-                    fetch('/api/profile_picture', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Фото профиля успешно загружено');
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                document.getElementById('previewImage').src = e.target.result;
-                                localStorage.setItem('profileImage', e.target.result);
-                            }
-                            reader.readAsDataURL(fileInput.files[0]);
-                            closeUploadModal();
-                        } else {
-                            alert('Ошибка при загрузке фото: ' + data.error);
-                        }
-                    })
-                    .catch(error => console.error('Ошибка:', error));
-                } else {
-                    alert('Пожалуйста, выберите файл для загрузки.');
-                }
+function fetchSportTypes() {
+    fetch('/api/get_sport_types')
+        .then(response => response.json())
+        .then(data => {
+            const sportTypeSelects = document.querySelectorAll('#sport_type');
+            sportTypeSelects.forEach(select => {
+                select.innerHTML = '';
+                data.sport_types.forEach(sportType => {
+                    const option = document.createElement('option');
+                    option.value = sportType.id;
+                    option.textContent = sportType.name;
+                    select.appendChild(option);
+                });
             });
+        })
+        .catch(error => console.error('Error fetching sport types:', error));
+}
 
-            const savedImage = localStorage.getItem('profileImage');
-            if (savedImage) {
-                document.getElementById('previewImage').src = savedImage;
+function fetchGenders() {
+    fetch('/api/get_genders')
+        .then(response => response.json())
+        .then(data => {
+            const genderRadioGroups = document.querySelectorAll('#gender');
+            genderRadioGroups.forEach(group => {
+                group.innerHTML = '';
+                data.genders.forEach(gender => {
+                    const radioInput = document.createElement('input');
+                    radioInput.type = 'radio';
+                    radioInput.id = `gender_${gender.id}`;
+                    radioInput.name = 'gender';
+                    radioInput.value = gender.id;
+                    radioInput.required = true;
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `gender_${gender.id}`);
+                    label.textContent = gender.name;
+                    group.appendChild(radioInput);
+                    group.appendChild(label);
+                    group.appendChild(document.createElement('br'));
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching genders:', error));
+}
+
+function fetchEventTypes() {
+    fetch('/api/get_event_types')
+        .then(response => response.json())
+        .then(data => {
+            const eventTypeSelect = document.getElementById('event_type');
+            if (eventTypeSelect) {
+                eventTypeSelect.innerHTML = '';
+                data.event_types.forEach(eventType => {
+                    const option = document.createElement('option');
+                    option.value = eventType.id;
+                    option.textContent = eventType.name;
+                    eventTypeSelect.appendChild(option);
+                });
             }
-        }
+        })
+        .catch(error => console.error('Error fetching event types:', error));
+}
 
-        function closeUploadModal() {
-            document.getElementById('uploadModal').style.display = 'none';
-        }
-
-        function setupInactivityTimer() {
-            const inactivityDuration = 3600000;
-            let inactivityTimeout;
-
-            function startInactivityTimer() {
-                inactivityTimeout = setTimeout(logoutDueToInactivity, inactivityDuration);
+function fetchLocations() {
+    fetch('/api/get_locations')
+        .then(response => response.json())
+        .then(data => {
+            const locationSelect = document.getElementById('location');
+            if (locationSelect) {
+                locationSelect.innerHTML = '';
+                data.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    locationSelect.appendChild(option);
+                });
             }
+        })
+        .catch(error => console.error('Error fetching locations:', error));
+}
 
-            function resetInactivityTimer() {
-                clearTimeout(inactivityTimeout);
-                startInactivityTimer();
+function fetchAwards() {
+    fetch('/api/get_awards')
+        .then(response => response.json())
+        .then(data => {
+            const deleteAwardSelect = document.getElementById('delete_award');
+            if (deleteAwardSelect) {
+                deleteAwardSelect.innerHTML = '';
+                data.awards.forEach(award => {
+                    const option = document.createElement('option');
+                    option.value = award.id;
+                    option.textContent = award.name;
+                    deleteAwardSelect.appendChild(option);
+                });
             }
+        })
+        .catch(error => console.error('Error fetching awards:', error));
+}
 
-            function logoutDueToInactivity() {
-                fetch('/api/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = 'login.html';
-                    } else {
-                        alert('Ошибка при автоматическом выходе');
-                    }
-                })
-                .catch(error => console.error('Error logging out due to inactivity:', error));
+function fetchCommands() {
+    fetch('/api/get_commands')
+        .then(response => response.json())
+        .then(data => {
+            const teamSelect = document.getElementById('team_select');
+            const deleteTeamSelect = document.getElementById('delete_team');
+            if (teamSelect) {
+                teamSelect.innerHTML = '';
+                data.commands.forEach(command => {
+                    const option = document.createElement('option');
+                    option.value = command.id;
+                    option.textContent = command.name;
+                    teamSelect.appendChild(option);
+                });
             }
-
-            document.addEventListener('mousemove', resetInactivityTimer);
-            document.addEventListener('keypress', resetInactivityTimer);
-            document.addEventListener('click', resetInactivityTimer);
-
-            startInactivityTimer();
-        }
-
-        function generatePassword() {
-            const length = 12;
-            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-            let password = "";
-            for (let i = 0, n = charset.length; i < length; ++i) {
-                password += charset.charAt(Math.floor(Math.random() * n));
+            if (deleteTeamSelect) {
+                deleteTeamSelect.innerHTML = '';
+                data.commands.forEach(command => {
+                    const option = document.createElement('option');
+                    option.value = command.id;
+                    option.textContent = command.name;
+                    deleteTeamSelect.appendChild(option);
+                });
             }
-            document.getElementById('password').value = password;
-        }
+        })
+        .catch(error => console.error('Error fetching commands:', error));
+}
 
-        function fetchGroups() {
-            fetch('/api/get_groups')
-                .then(response => response.json())
-                .then(data => {
-                    const groupSelects = document.querySelectorAll('#group');
-                    groupSelects.forEach(select => {
-                        select.innerHTML = '';
-                        data.groups.forEach(group => {
-                            const option = document.createElement('option');
-                            option.value = group.name;
-                            option.textContent = group.name;
-                            select.appendChild(option);
-                        });
-                    });
-                })
-                .catch(error => console.error('Error fetching groups:', error));
-        }
-
-        function fetchSportTypes() {
-            fetch('/api/get_sport_types')
-                .then(response => response.json())
-                .then(data => {
-                    const sportTypeSelects = document.querySelectorAll('#sport_type');
-                    sportTypeSelects.forEach(select => {
-                        select.innerHTML = '';
-                        data.sport_types.forEach(sportType => {
-                            const option = document.createElement('option');
-                            option.value = sportType.id;
-                            option.textContent = sportType.name;
-                            select.appendChild(option);
-                        });
-                    });
-                })
-                .catch(error => console.error('Error fetching sport types:', error));
-        }
-
-        function fetchGenders() {
-            fetch('/api/get_genders')
-                .then(response => response.json())
-                .then(data => {
-                    const genderRadioGroups = document.querySelectorAll('#gender');
-                    genderRadioGroups.forEach(group => {
-                        group.innerHTML = '';
-                        data.genders.forEach(gender => {
-                            const radioInput = document.createElement('input');
-                            radioInput.type = 'radio';
-                            radioInput.id = `gender_${gender.id}`;
-                            radioInput.name = 'gender';
-                            radioInput.value = gender.id;
-                            radioInput.required = true;
-                            const label = document.createElement('label');
-                            label.setAttribute('for', `gender_${gender.id}`);
-                            label.textContent = gender.name;
-                            group.appendChild(radioInput);
-                            group.appendChild(label);
-                            group.appendChild(document.createElement('br'));
-                        });
-                    });
-                })
-                .catch(error => console.error('Error fetching genders:', error));
-        }
-
-        function fetchEventTypes() {
-            fetch('/api/get_event_types')
-                .then(response => response.json())
-                .then(data => {
-                    const eventTypeSelect = document.getElementById('event_type');
-                    if (eventTypeSelect) {
-                        eventTypeSelect.innerHTML = '';
-                        data.event_types.forEach(eventType => {
-                            const option = document.createElement('option');
-                            option.value = eventType.id;
-                            option.textContent = eventType.name;
-                            eventTypeSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching event types:', error));
-        }
-
-        function fetchLocations() {
-            fetch('/api/get_locations')
-                .then(response => response.json())
-                .then(data => {
-                    const locationSelect = document.getElementById('location');
-                    if (locationSelect) {
-                        locationSelect.innerHTML = '';
-                        data.locations.forEach(location => {
-                            const option = document.createElement('option');
-                            option.value = location.id;
-                            option.textContent = location.name;
-                            locationSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching locations:', error));
-        }
-
-        function fetchAwards() {
-            fetch('/api/get_awards')
-                .then(response => response.json())
-                .then(data => {
-                    const deleteAwardSelect = document.getElementById('delete_award');
-                    if (deleteAwardSelect) {
-                        deleteAwardSelect.innerHTML = '';
-                        data.awards.forEach(award => {
-                            const option = document.createElement('option');
-                            option.value = award.id;
-                            option.textContent = award.name;
-                            deleteAwardSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching awards:', error));
-        }
-
-        function fetchCommands() {
-            fetch('/api/get_commands')
-                .then(response => response.json())
-                .then(data => {
-                    const teamSelect = document.getElementById('team_select');
-                    const deleteTeamSelect = document.getElementById('delete_team');
-                    if (teamSelect) {
-                        teamSelect.innerHTML = '';
-                        data.commands.forEach(command => {
-                            const option = document.createElement('option');
-                            option.value = command.id;
-                            option.textContent = command.name;
-                            teamSelect.appendChild(option);
-                        });
-                    }
-                    if (deleteTeamSelect) {
-                        deleteTeamSelect.innerHTML = '';
-                        data.commands.forEach(command => {
-                            const option = document.createElement('option');
-                            option.value = command.id;
-                            option.textContent = command.name;
-                            deleteTeamSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching commands:', error));
-        }
-
-        function fetchPhysOrgs() {
-            fetch('/api/get_physorgs')
-                .then(response => response.json())
-                .then(data => {
-                    const deletePhysOrgSelect = document.getElementById('delete_physorg');
-                    if (deletePhysOrgSelect) {
-                        deletePhysOrgSelect.innerHTML = '';
-                        data.physorgs.forEach(physorg => {
-                            const option = document.createElement('option');
-                            option.value = physorg.id;
-                            option.textContent = `${physorg.surname} ${physorg.name} ${physorg.patronymic}`;
-                            deletePhysOrgSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching physorgs:', error));
-        }
-
+function fetchPhysOrgs() {
+    fetch('/api/get_physorgs')
+        .then(response => response.json())
+        .then(data => {
+            const deletePhysOrgSelect = document.getElementById('delete_physorg');
+            if (deletePhysOrgSelect) {
+                deletePhysOrgSelect.innerHTML = '';
+                data.physorgs.forEach(physorg => {
+                    const option = document.createElement('option');
+                    option.value = physorg.id;
+                    option.textContent = `${physorg.surname} ${physorg.name} ${physorg.patronymic}`;
+                    deletePhysOrgSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error fetching physorgs:', error));
+}
 
 function fetchRequests() {
     fetch('/api/get_requests')
@@ -1047,8 +1041,6 @@ function fetchRequests() {
             return response.json();
         })
         .then(data => {
-            console.log('Received data:', data);
-
             const requestsList = document.getElementById('requestsList');
             requestsList.innerHTML = '';
 
@@ -1063,8 +1055,6 @@ function fetchRequests() {
             });
 
             data.requests.forEach(request => {
-                console.log('Request data:', request);
-
                 const requestElement = document.createElement('div');
                 requestElement.className = 'request-item';
                 const statusClass = `status-${request.status.toLowerCase()}`;
@@ -1119,57 +1109,91 @@ function approveRequest(requestId) {
     .catch(error => console.error('Ошибка при одобрении заявки:', error));
 }
 
- function generateOrder() {
-    const date = new Date().toLocaleDateString();
-    const eventSelect = document.getElementById('event_select');
-    const eventName = eventSelect.options[eventSelect.selectedIndex].text;
-    const eventDate = document.getElementById('event_date').value;
-    const year = new Date().getFullYear();
+function generateOrder() {
+    const selectedRequests = Array.from(document.querySelectorAll('input[name="request"]:checked')).map(checkbox => checkbox.value);
 
-    // Получаем участников из выбранной заявки
-    const selectedRequest = data.requests.find(request => request.event_name === eventName);
-    let teamMembersHtml = '';
-    if (selectedRequest && selectedRequest.team_members) {
-        teamMembersHtml = selectedRequest.team_members.map(member =>
-            `- ${member.surname} ${member.name} ${member.patronymic}, ${member.group}`
+    fetch('/api/get_students_in_requests', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ request_ids: selectedRequests })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`Server responded with status ${response.status}: ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        let teamMembersHtml = data.students.map(student =>
+            `- ${student.surname} ${student.name} ${student.patronymic}, ${student.group}`
         ).join('\n');
-    }
 
-    const orderText = `
+        const orderText = `
 Автономное профессиональное образовательное учреждение
 Вологодской области
 «Вологодский колледж связи и информационных технологий»
 **РАСПОРЯЖЕНИЕ**
-${date} № ______
+${new Date().toLocaleDateString()} № ______
 г. Вологда
-В связи с участием в ${eventName}, проводимого ${eventDate}, среди команд студентов, обучающихся по программам среднего профессионального образования в образовательных организациях Вологодской области в спортивном сезоне ${year} года,
+В связи с участием в мероприятии, проводимого ${new Date().toLocaleDateString()}, среди команд студентов, обучающихся по программам среднего профессионального образования в образовательных организациях Вологодской области в спортивном сезоне ${new Date().getFullYear()} года,
 ПРЕДЛАГАЮ:
-1. Освободить от учебных занятий ${eventDate} следующих студентов:
-${teamMembersHtml}
+1. Освободить от учебных занятий ${new Date().toLocaleDateString()} следующих студентов:
+${teamMembersHtml || 'Участники не загружены'}
 2. Студентам, задействованным в мероприятии, заранее получить у преподавателей задание для отработки пропущенного материала.
 3. Преподавателям обеспечить сдачу промежуточной аттестации, совпадающей со сроками проведения мероприятия, в иные даты в рабочем порядке.
 4. Преподавателю физической культуры {ФИО преподавателя} провести со студентами инструктаж по технике безопасности во время проведения турнира.
 5. Заведующим отделением довести распоряжение до кураторов учебных групп и преподавателей.
 6. Контроль за исполнением распоряжения возложить на заместителя директора по воспитательной работе {ФИО заместителя}.
 Директор: И.В. Дарманская
-    `;
+        `;
 
-    document.getElementById('orderText').value = orderText;
-    document.getElementById('orderTemplate').style.display = 'block';
+        const orderTextElement = document.getElementById('orderText');
+        if (orderTextElement) {
+            orderTextElement.value = orderText;
+        }
+
+        const orderTemplateElement = document.getElementById('orderTemplate');
+        if (orderTemplateElement) {
+            orderTemplateElement.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при получении данных студентов:', error);
+        alert(`Ошибка при получении данных студентов: ${error.message}`);
+    });
 }
 
-        function downloadOrder() {
-            const orderText = document.getElementById('orderText').value;
-            const blob = new Blob([orderText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Распоряжение.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+function editOrder() {
+    const orderTextElement = document.getElementById('orderText');
+    if (orderTextElement) {
+        orderTextElement.readOnly = !orderTextElement.readOnly;
+        if (!orderTextElement.readOnly) {
+            orderTextElement.focus();
         }
+    }
+}
+
+function downloadOrder() {
+    const { jsPDF } = window.jspdf;
+    const orderText = document.getElementById('orderText').value;
+
+    if (!orderText) {
+        console.error('Текст распоряжения пуст');
+        return;
+    }
+
+    const doc = new jsPDF();
+    doc.setFont("helvetica");
+    doc.setFontSize(12);
+    doc.text(orderText, 10, 10);
+
+    doc.save('Распоряжение.pdf');
+}
     </script>
 </body>
 </html>

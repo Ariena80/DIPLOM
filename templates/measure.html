@@ -188,12 +188,29 @@
             color: white;
             font-weight: bold;
         }
-        footer {
-            background-color: #5a0888;
-            color: white;
+            footer {
+        text-align: center;
+        background-color: #dc3545; /* Такой же цвет, как у шапки */
+        color: white; /* Белый цвет текста */
+        padding: 10px 0;
+        height: 3%;
+        }       
+
+        /* Расписание тренировок */
+        .schedule-table {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        .schedule-table th,
+        .schedule-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
             text-align: center;
-            padding: 10px;
-            margin-top: auto;
+        }
+        .schedule-table thead {
+            background-color: #f0e6f6;
         }
 
         /* Модальное окно */
@@ -275,25 +292,6 @@
         <button id="next-page">Вперед</button>
     </div>
 </div>
-
-
-<div class="measure-container" style="margin-top: 30px;">
-    <h2 style="text-align: center; color:#5a0888;">Расписание тренировок</h2>
-    <div style="background-color:#f0e6f6; padding:20px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:600px; margin:auto;">
-        <ul style="list-style: none; padding:0; margin:0; font-size:16px; color:#333;">
-            <li style="margin-bottom:10px;">
-                <strong style="color:#5a0888;">Понедельник:</strong> 18:00 - Тренировка по тактике
-            </li>
-            <li style="margin-bottom:10px;">
-                <strong style="color:#5a0888;">Среда:</strong> 19:00 - Общая тренировка
-            </li>
-            <li style="margin-bottom:10px;">
-                <strong style="color:#5a0888;">Пятница:</strong> 17:30 - Тренировка по физической подготовке
-            </li>
-        </ul>
-    </div>
-</div>
-
     <section class="calendar">
         <div class="calendar-header">
             <div class="calendar-title" id="calendar-title">Календарь</div>
@@ -332,6 +330,59 @@
     </section>
 </div>
 
+    <!-- Расписание тренировок и календарь -->
+    <div style="display: flex; flex-direction: column; align-items: center; flex:1;">
+        <!-- Расписание тренировок -->
+        <div class="measure-container training-schedule" style="width: 100%; max-width: 600px;">
+            <h2 style="text-align: center;">Расписание тренировок</h2>
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>День</th>
+                        <th>Спорт</th>
+                        <th>Время</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Пн</td>
+                        <td>Футбол</td>
+                        <td>18:00–20:00</td>
+                    </tr>
+                    <tr>
+                        <td>Вт</td>
+                        <td>Баскетбол</td>
+                        <td>16:00–18:00</td>
+                    </tr>
+                    <tr>
+                        <td>Ср</td>
+                        <td>Волейбол</td>
+                        <td>19:00–21:00</td>
+                    </tr>
+                    <tr>
+                        <td>Чт</td>
+                        <td>Волейбол</td>
+                        <td>17:00–19:00</td>
+                    </tr>
+                    <tr>
+                        <td>Пт</td>
+                        <td>Футбол</td>
+                        <td>17:30–19:30</td>
+                    </tr>
+                    <tr>
+                        <td>Сб</td>
+                        <td>Баскетбол</td>
+                        <td>10:00–12:00</td>
+                    </tr>
+                    <tr>
+                        <td>Вс</td>
+                        <td>Отдых</td>
+                        <td>—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
 <!-- Модальное окно -->
 <div id="eventModal" class="modal">
     <div class="modal-content">
@@ -352,8 +403,8 @@
 
 
 <footer>
-    <p>© Все права защищены Arieshka, 2025.</p>
-</footer>
+        <p>© А.И.Морозова Все права защищены, 2025.</p>
+    </footer>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -412,31 +463,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Загрузка данных событий
     function loadEvents() {
-        fetch('/api/get_events')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data);
-                if (data && Array.isArray(data.events)) {
-                    allEvents = data.events.sort((a, b) => new Date(a.date) - new Date(b.date));
-                    currentPage = 0;
-                    renderEvents(allEvents);
-                    highlightDaysWithEvents();
-                } else {
-                    console.error('Invalid data format:', data);
-                    eventsContainer.innerHTML = '<p>Нет доступных мероприятий.</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при загрузке событий:', error);
-                eventsContainer.innerHTML = `<p>Ошибка при загрузке мероприятий: ${error.message}</p>`;
-            });
-    }
+    fetch('/api/get_events')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Received data:', data);
+            if (data && Array.isArray(data.events)) {
+                allEvents = data.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+                currentPage = 0;
 
+                // Отладочное сообщение
+                allEvents.forEach(event => {
+                    console.log(`Event ID: ${event.id}, Date: ${event.date}`);
+                });
+
+                renderEvents(allEvents);
+                highlightDaysWithEvents();
+            } else {
+                console.error('Invalid data format:', data);
+                eventsContainer.innerHTML = '<p>Нет доступных мероприятий.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке событий:', error);
+            eventsContainer.innerHTML = `<p>Ошибка при загрузке мероприятий: ${error.message}</p>`;
+        });
+}
     // Подсветка дней, в которые есть события
     function highlightDaysWithEvents() {
         // Удаляем старые слушатели
