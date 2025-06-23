@@ -482,14 +482,28 @@ def add_team_request():
 
     return jsonify({"success": True, "message": "Заявка на команду добавлена успешно"}), 200
 
+import logging
+
 @app.route('/api/get_requests', methods=['GET'])
 def get_requests():
     user_id = session.get('user_id')
     if not user_id:
+        logging.warning('Пользователь не авторизован')
         return jsonify({'error': 'Пользователь не авторизован'}), 401
 
     try:
-        requests = Request.query.filter_by(userID=user_id).options(joinedload(Request.event), joinedload(Request.sportType)).all()
+        user = User.query.get(user_id)
+        if not user:
+            logging.warning(f'Пользователь с id {user_id} не найден')
+            return jsonify({'error': 'Пользователь не найден'}), 404
+
+        if user.roleID == 1:
+            requests = Request.query.options(joinedload(Request.event), joinedload(Request.sportType)).all()
+            logging.info(f'Администратор {user_id} запросил все заявки. Найдено {len(requests)} заявок.')
+        else:
+            requests = Request.query.filter_by(userID=user_id).options(joinedload(Request.event), joinedload(Request.sportType)).all()
+            logging.info(f'Пользователь {user_id} запросил свои заявки. Найдено {len(requests)} заявок.')
+
         requests_list = [{
             'id': req.id,
             'team_name': req.teamName,
@@ -497,13 +511,22 @@ def get_requests():
             'sport_type_name': req.sportType.name if req.sportType else 'Не указан',
             'gender': req.genderID,
             'status': req.status,
-            'team_members': [{'surname': student.surname, 'name': student.name, 'patronymic': student.patronymic} for student in req.students]
+            'team_members': [
+                {
+                    'surname': student.surname,
+                    'name': student.name,
+                    'patronymic': student.patronymic
+                }
+                for student in req.students
+            ]
         } for req in requests]
+
         return jsonify({'requests': requests_list})
     except Exception as e:
-        logging.error(f"Error in get_requests: {e}")
+        logging.error(f"Ошибка в get_requests: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
 
+    
 @app.route('/api/update_team_members', methods=['POST'])
 def update_team_members():
     data = request.get_json()
