@@ -323,10 +323,11 @@ def api_login():
     else:
         return jsonify({"success": False, "message": "Неверный логин или пароль"}), 401
 
-@app.route('/api/logout', methods=['POST'])
-def api_logout():
-    session.pop('user_id', None)
-    return jsonify({"success": True, "message": "Выход выполнен успешно"}), 200
+@app.route('/logout', methods=['POST'])
+def logout():
+    # Завершение сессии пользователя
+    session.pop('user_id', None)  
+    return jsonify({'status': 'success'})
 
 @app.route('/api/add_news', methods=['POST'])
 def add_news():
@@ -634,9 +635,14 @@ def get_events():
             'place': event.place.name if event.place else 'Не указано'
         } for event in events]
 
+        # Отладочное сообщение
+        for event in events_list:
+            print(f"Event ID: {event['id']}, Date: {event['date']}")
+
         return jsonify({'events': events_list})
     except Exception as e:
-        return jsonify({'error': 'Ошибка при получении мероприятий'}), 500
+        return jsonify({'error': f'Ошибка при получении мероприятий: {str(e)}'}), 500
+
 
 @app.route('/api/add_media', methods=['POST'])
 def add_media():
