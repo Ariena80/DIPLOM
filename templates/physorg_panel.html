@@ -338,46 +338,49 @@
                 .catch(error => console.error('Error fetching user data:', error));
 
             function updateTeamMembers() {
-                const sportType = document.getElementById("sport_type").value;
-                const membersContainer = document.getElementById("team_members_container");
-                membersContainer.innerHTML = '<label>Игроки команды:</label>';
+    const sportType = document.getElementById("sport_type").value;
+    const membersContainer = document.getElementById("team_members_container");
+    membersContainer.innerHTML = '<label>Игроки команды:</label>';
 
-                let memberCount;
-                if (sportType === "1") { // Баскетбол
-                    memberCount = 3;
-                } else if (sportType === "2") { // Футбол
-                    memberCount = 5;
-                } else if (sportType === "3") { // Волейбол
-                    memberCount = 6;
-                } else {
-                    memberCount = 4;
-                }
+    let memberCount;
+    if (sportType === "1") { // Футбол
+        memberCount = 5;
+    } else if (sportType === "2") { // Баскетбол
+        memberCount = 3;
+    } else if (sportType === "3") { // Волейбол
+        memberCount = 6;
+    } else {
+        memberCount = 4;
+    }
 
-                for (let i = 1; i <= memberCount; i++) {
-                    const input = document.createElement("input");
-                    input.type = "text";
-                    input.name = "team_members[]";
-                    input.placeholder = `Игрок команды ${i}`;
-                    input.required = true;
-                    membersContainer.appendChild(input);
-                    membersContainer.appendChild(document.createElement("br"));
-                }
+    for (let i = 1; i <= memberCount; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = "team_members[]";
+        input.placeholder = `Игрок команды ${i}`;
+        input.required = true;
+        membersContainer.appendChild(input);
+        membersContainer.appendChild(document.createElement("br"));
+    }
 
-                const addMemberButton = document.createElement("button");
-                addMemberButton.type = "button";
-                addMemberButton.textContent = "Добавить еще одного участника";
-                addMemberButton.onclick = function() {
-                    const newInput = document.createElement("input");
-                    newInput.type = "text";
-                    newInput.name = "team_members[]";
-                    newInput.placeholder = `Игрок команды ${memberCount + 1}`;
-                    newInput.required = true;
-                    membersContainer.appendChild(newInput);
-                    membersContainer.appendChild(document.createElement("br"));
-                    memberCount++;
-                };
-                membersContainer.appendChild(addMemberButton);
-            }
+    // Добавляем кнопку "Добавить еще одного участника" только для определенных видов спорта
+    if (!["1", "2", "3"].includes(sportType)) {
+        const addMemberButton = document.createElement("button");
+        addMemberButton.type = "button";
+        addMemberButton.textContent = "Добавить еще одного участника";
+        addMemberButton.onclick = function() {
+            const newInput = document.createElement("input");
+            newInput.type = "text";
+            newInput.name = "team_members[]";
+            newInput.placeholder = `Игрок команды ${memberCount + 1}`;
+            newInput.required = true;
+            membersContainer.appendChild(newInput);
+            membersContainer.appendChild(document.createElement("br"));
+            memberCount++;
+        };
+        membersContainer.appendChild(addMemberButton);
+    }
+}
 
             document.getElementById("sport_type").addEventListener('change', updateTeamMembers);
 
