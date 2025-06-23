@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/account-styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/flexbox.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='style/icon.ico') }}" type="image/x-icon" />
@@ -24,26 +25,31 @@
             padding: 20px;
         }
 
-        .profile-form-container {
+        .content-container {
             display: flex;
             gap: 20px;
             margin-bottom: 20px;
         }
 
-        .profile-section {
-            flex: 1;
+        .profile-section, .form-container, .requests-container {
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
 
+        .profile-section {
+            flex: 1;
+        }
+
         .form-container {
             flex: 2;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+        }
+
+        .requests-container {
+            flex: 2;
+            max-height: 600px;
+            overflow-y: auto;
         }
 
         .form-group {
@@ -89,32 +95,40 @@
             background-color: #45a049;
         }
 
-        .requests-container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 100%;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
         .request-item {
             border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
             border-radius: 5px;
             background-color: #f9f9f9;
+            transition: transform 0.2s;
+        }
+
+        .request-item:hover {
+            transform: scale(1.02);
         }
 
         .request-item h3 {
             margin-top: 0;
-            font-size: 16px;
+            font-size: 18px;
+            color: #333;
         }
 
         .request-item p {
             margin: 5px 0;
             font-size: 14px;
+        }
+
+        .status-pending {
+            color: orange;
+        }
+
+        .status-approved {
+            color: green;
+        }
+
+        .status-rejected {
+            color: red;
         }
 
         footer {
@@ -125,6 +139,58 @@
             position: fixed;
             width: 100%;
             bottom: 0;
+        }
+
+        .profile-info-row {
+            margin-bottom: 10px;
+        }
+
+        .profile-info-item {
+            margin-bottom: 10px;
+        }
+
+        .profile-info-item label {
+            display: inline-block;
+            width: 80px;
+            font-weight: bold;
+        }
+
+        .profile-info-item p {
+            display: inline-block;
+            margin: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
         }
     </style>
 </head>
@@ -141,41 +207,30 @@
         </nav>
     </header>
     <div class="main-container">
-        <div class="profile-form-container">
+        <div class="content-container">
             <div class="profile-section">
                 <h2>Мой профиль</h2>
                 <div class="profile-picture">
                     <img src="{{ url_for('static', filename='style/icon-placeholder.png') }}" alt="Профиль" id="previewImage">
                     <div class="profile-picture-actions">
-                        <button onclick="document.getElementById('profilePictureInput').click()">Загрузить фото</button>
+                        <button onclick="document.getElementById('photoModal').style.display='block'">Загрузить фото</button>
                         <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
                     </div>
                 </div>
                 <div class="profile-info">
                     <div class="profile-info-row">
                         <div class="profile-info-item">
-                            <label>Фамилия:</label>
-                            <p id="surname"></p>
-                        </div>
-                        <div class="profile-info-item">
-                            <label>Имя:</label>
-                            <p id="first_name"></p>
-                        </div>
-                        <div class="profile-info-item">
-                            <label>Отчество:</label>
-                            <p id="middle_name"></p>
+                            <p id="full_name"></p>
                         </div>
                     </div>
                     <div class="profile-info-row">
                         <div class="profile-info-item">
-                            <label>Должность:</label>
                             <p id="position"></p>
                         </div>
                     </div>
                     <button id="logoutButton" class="logoutButton">Выйти</button>
                 </div>
             </div>
-
             <div class="form-container">
                 <h2>Добавление команды</h2>
                 <form id="addTeamRequestForm">
@@ -184,17 +239,21 @@
                         <input type="text" id="team_name" name="team_name" required>
                     </div>
                     <div class="form-group">
+                        <label for="event_id">Мероприятие:</label>
+                        <select id="event_id" name="event_id" required>
+                            <option value="">Выберите мероприятие</option>
+                            {% for event in events %}
+                                <option value="{{ event.id }}">{{ event.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="sport_type">Вид спорта:</label>
                         <select id="sport_type" name="sport_type" required>
                             <option value="">Выберите вид спорта</option>
-                            <option value="1">Теннис</option>
-                            <option value="2">Плавание</option>
-                            <option value="3">Шашки</option>
-                            <option value="4">Шахматы</option>
-                            <option value="5">Легкая атлетика</option>
-                            <option value="6">Баскетбол</option>
-                            <option value="7">Футбол</option>
-                            <option value="8">Волейбол</option>
+                            {% for sport in sports %}
+                                <option value="{{ sport.id }}">{{ sport.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
@@ -207,7 +266,7 @@
                         </div>
                     </div>
                     <div class="form-group" id="team_members_container">
-                        <!-- Поля для игроков будут добавлены динамически -->
+                        <!-- Здесь будут динамически добавляться поля для игроков -->
                     </div>
                     <div class="form-group">
                         <label for="reserve_member">Запасной игрок:</label>
@@ -218,28 +277,54 @@
                     </div>
                 </form>
             </div>
-        </div>
-
-        <div class="requests-container">
-            <h2>Список заявок</h2>
-            <div id="requestsList">
-                <!-- Заявки будут загружены динамически -->
+            <div class="requests-container">
+                <h2>Список заявок</h2>
+                <div id="requestsList">
+                    <!-- Здесь будут отображаться заявки -->
+                </div>
             </div>
         </div>
     </div>
-
     <footer>
         <p>© Все права защищены Arieshka, 2025.</p>
     </footer>
+
+    <!-- Модальное окно для редактирования игроков -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Редактировать игроков</h2>
+            <form id="editTeamMembersForm">
+                <div class="form-group" id="edit_team_members_container">
+                    <!-- Здесь будут динамически добавляться поля для редактирования игроков -->
+                </div>
+                <button type="button" id="addMemberButton">Добавить еще одного участника</button>
+                <button type="submit">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для загрузки фото -->
+    <div id="photoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Загрузить фото</h2>
+            <form id="uploadPhotoForm">
+                <div class="form-group">
+                    <input type="file" id="photoInput" accept="image/*">
+                </div>
+                <button type="button" onclick="document.getElementById('photoModal').style.display='none'">Загрузить</button>
+            </form>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             fetch('/api/user_data')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('surname').textContent = data.surname;
-                    document.getElementById('first_name').textContent = data.name;
-                    document.getElementById('middle_name').textContent = data.patronymic;
+                    const fullName = `${data.surname} ${data.name} ${data.patronymic}`;
+                    document.getElementById('full_name').textContent = fullName;
 
                     const roleId = data.role;
                     let position = '';
@@ -255,19 +340,17 @@
             function updateTeamMembers() {
                 const sportType = document.getElementById("sport_type").value;
                 const membersContainer = document.getElementById("team_members_container");
-                membersContainer.innerHTML = '<label>Игроки команды:</label><br>';
+                membersContainer.innerHTML = '<label>Игроки команды:</label>';
 
                 let memberCount;
-                if (["1", "2", "3", "4", "5"].includes(sportType)) {
-                    memberCount = 4;
-                } else if (sportType === "6") {
+                if (sportType === "1") { // Баскетбол
                     memberCount = 3;
-                } else if (sportType === "7") {
+                } else if (sportType === "2") { // Футбол
                     memberCount = 5;
-                } else if (sportType === "8") {
+                } else if (sportType === "3") { // Волейбол
                     memberCount = 6;
                 } else {
-                    memberCount = 1;
+                    memberCount = 4;
                 }
 
                 for (let i = 1; i <= memberCount; i++) {
@@ -279,6 +362,21 @@
                     membersContainer.appendChild(input);
                     membersContainer.appendChild(document.createElement("br"));
                 }
+
+                const addMemberButton = document.createElement("button");
+                addMemberButton.type = "button";
+                addMemberButton.textContent = "Добавить еще одного участника";
+                addMemberButton.onclick = function() {
+                    const newInput = document.createElement("input");
+                    newInput.type = "text";
+                    newInput.name = "team_members[]";
+                    newInput.placeholder = `Игрок команды ${memberCount + 1}`;
+                    newInput.required = true;
+                    membersContainer.appendChild(newInput);
+                    membersContainer.appendChild(document.createElement("br"));
+                    memberCount++;
+                };
+                membersContainer.appendChild(addMemberButton);
             }
 
             document.getElementById("sport_type").addEventListener('change', updateTeamMembers);
@@ -288,6 +386,7 @@
 
                 const formData = {
                     team_name: document.getElementById('team_name').value,
+                    event_id: document.getElementById('event_id').value,
                     sport_type: document.getElementById('sport_type').value,
                     gender: document.querySelector('input[name="gender"]:checked').value,
                     team_members: Array.from(document.querySelectorAll('input[name="team_members[]"]')).map(input => input.value),
@@ -305,7 +404,7 @@
                 .then(data => {
                     console.log('Success:', data);
                     alert('Заявка успешно отправлена!');
-                    fetchRequests(); // Обновляем список заявок после отправки
+                    fetchRequests();
                 })
                 .catch((error) => {
                     console.error('Error:', error);
@@ -315,19 +414,40 @@
 
             function fetchRequests() {
                 fetch('/api/get_requests')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Received requests data:', data);
                         const requestsList = document.getElementById('requestsList');
                         requestsList.innerHTML = '';
-                        data.requests.forEach(request => {
+
+                        if (!data.requests || data.requests.length === 0) {
+                            console.log('No requests found');
+                            requestsList.innerHTML = '<p>Нет доступных заявок</p>';
+                            return;
+                        }
+
+                        // Сортировка заявок: сначала подтвержденные, затем ожидающие, затем отклоненные
+                        data.requests.sort((a, b) => {
+                            const statusOrder = { 'approved': 1, 'pending': 2, 'rejected': 3 };
+                            return statusOrder[a.status] - statusOrder[b.status];
+                        });
+
+                        data.requests.forEach((request, index) => {
                             const requestElement = document.createElement('div');
                             requestElement.className = 'request-item';
+                            const statusClass = `status-${request.status.toLowerCase()}`;
                             requestElement.innerHTML = `
-                                <h3>${request.team_name}</h3>
-                                <p>Вид спорта: ${request.sport_type}</p>
-                                <p>Пол: ${request.gender}</p>
-                                <p>Статус: ${request.status}</p>
-                                <button onclick="editRequest(${request.id})">Редактировать</button>
+                                <h3>Заявка ${index + 1}</h3>
+                                <p><strong>Название команды:</strong> ${request.team_name || 'Не указано'}</p>
+                                <p><strong>Мероприятие:</strong> ${request.event_name || 'Не указано'}</p>
+                                <p><strong>Вид спорта:</strong> ${request.sport_type_name || 'Не указан'}</p>
+                                <p><strong>Статус:</strong> <span class="${statusClass}">${getStatusText(request.status)}</span></p>
+                                <button onclick="editRequest(${request.id}, '${request.team_members ? request.team_members.map(member => `${member.surname} ${member.name} ${member.patronymic}`).join(', ') : ''}')">Редактировать</button>
                             `;
                             requestsList.appendChild(requestElement);
                         });
@@ -335,13 +455,105 @@
                     .catch(error => console.error('Ошибка при получении заявок:', error));
             }
 
-            function editRequest(requestId) {
-                alert(`Редактирование заявки с ID: ${requestId}`);
-                // Здесь будет логика редактирования заявки
+            function getStatusText(status) {
+                const statusMap = {
+                    'pending': 'В ожидании',
+                    'approved': 'Подтверждено',
+                    'rejected': 'Отклонено'
+                };
+                return statusMap[status.toLowerCase()] || status;
             }
 
-            // Загружаем заявки при открытии страницы
+            function editRequest(requestId, teamMembers) {
+                const modal = document.getElementById("editModal");
+                const editTeamMembersContainer = document.getElementById("edit_team_members_container");
+                editTeamMembersContainer.innerHTML = '<label>Игроки команды:</label>';
+
+                const members = teamMembers.split(', ');
+                members.forEach((member, index) => {
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.name = "edit_team_members[]";
+                    input.value = member;
+                    input.placeholder = `Игрок команды ${index + 1}`;
+                    input.required = true;
+                    editTeamMembersContainer.appendChild(input);
+                    editTeamMembersContainer.appendChild(document.createElement("br"));
+                });
+
+                modal.style.display = "block";
+
+                document.getElementById("editTeamMembersForm").addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    const updatedTeamMembers = Array.from(document.querySelectorAll('input[name="edit_team_members[]"]')).map(input => input.value);
+
+                    fetch('/api/update_team_members', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            request_id: requestId,
+                            team_members: updatedTeamMembers
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                        alert('Изменения успешно сохранены!');
+                        modal.style.display = "none";
+                        fetchRequests();
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        alert('Произошла ошибка при сохранении изменений.');
+                    });
+                });
+            }
+
+            const closeModals = document.querySelectorAll(".close");
+            closeModals.forEach(closeModal => {
+                closeModal.onclick = function() {
+                    this.closest('.modal').style.display = "none";
+                }
+            });
+
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = "none";
+                }
+            };
+
             fetchRequests();
+
+            fetch('/api/get_events')
+                .then(response => response.json())
+                .then(data => {
+                    const eventSelect = document.getElementById('event_id');
+                    eventSelect.innerHTML = '<option value="">Выберите мероприятие</option>';
+                    data.events.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.id;
+                        option.textContent = event.name;
+                        eventSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Ошибка при получении мероприятий:', error));
+
+            fetch('/api/get_sport_types')
+                .then(response => response.json())
+                .then(data => {
+                    const sportSelect = document.getElementById('sport_type');
+                    sportSelect.innerHTML = '<option value="">Выберите вид спорта</option>';
+                    data.sport_types.forEach(sport => {
+                        const option = document.createElement('option');
+                        option.value = sport.id;
+                        option.textContent = sport.name;
+                        sportSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Ошибка при получении видов спорта:', error));
         });
     </script>
 </body>

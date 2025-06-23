@@ -302,26 +302,32 @@ button:hover {
                 </div>
             </form>
         </div>
-        <div id="editStatisticForm" class="content" style="display: none;">
+
+<div id="editStatisticForm" class="content" style="display: none;">
     <h2>Результаты</h2>
-    <form id="editStatistic" onsubmit="submitStatistic(event)">
+    <form id="editStatistic" onsubmit="event.preventDefault(); submitStatistic();">
         <div class="form-group">
-            <label for="sport_type">Вид спорта:</label>
-            <select id="sport_type" name="sport_type" required>
-                <!-- Опции будут загружены динамически -->
+            <label for="event_select">Мероприятие:</label>
+            <select id="event_select" name="event_select" required>
+                <!-- Options will be loaded dynamically -->
             </select>
         </div>
         <div class="form-group">
-            <label for="team_select">Название команды:</label>
-            <select id="team_select" name="team_select" required>
-                <!-- Опции будут загружены динамически -->
+            <label>1 место:</label>
+            <select id="first_place" name="first_place" required>
+                <!-- Options will be loaded dynamically -->
             </select>
         </div>
         <div class="form-group">
-            <label>Результат матча:</label>
-            <select id="result" name="result" required>
-                <option value="win">Победа</option>
-                <option value="lose">Поражение</option>
+            <label>2 место:</label>
+            <select id="second_place" name="second_place" required>
+                <!-- Options will be loaded dynamically -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label>3 место:</label>
+            <select id="third_place" name="third_place" required>
+                <!-- Options will be loaded dynamically -->
             </select>
         </div>
         <div class="form-group">
@@ -329,6 +335,8 @@ button:hover {
         </div>
     </form>
 </div>
+
+
 
         <div id="newsForm" class="content" style="display: none;">
             <h2>Добавление новостей</h2>
@@ -395,27 +403,8 @@ button:hover {
             </form>
             <div id="orderTemplate" style="display: none;">
                 <h3>Распоряжение</h3>
-                <textarea id="orderText" rows="10" cols="50" readonly>
-Автономное профессиональное образовательное учреждение
-Вологодской области
-«Вологодский колледж связи и информационных технологий»
-**РАСПОРЯЖЕНИЕ**
-{дата} № ______
-г. Вологда
-В связи с участием в {название мероприятия}, проводимого {дата мероприятия}, среди команд студентов, обучающихся по программам среднего профессионального образования в образовательных организациях Вологодской области в спортивном сезоне {год} года,
-ПРЕДЛАГАЮ:
-1. Освободить от учебных занятий {дата мероприятия} следующих студентов:
-   - {ФИО студента 1}, {группа}
-   - {ФИО студента 2}, {группа}
-   - {ФИО студента 3}, {группа}
-   - {ФИО студента 4}, {группа}
-2. Студентам, задействованным в мероприятии, заранее получить у преподавателей задание для отработки пропущенного материала.
-3. Преподавателям обеспечить сдачу промежуточной аттестации, совпадающей со сроками проведения мероприятия, в иные даты в рабочем порядке.
-4. Преподавателю физической культуры {ФИО преподавателя} провести со студентами инструктаж по технике безопасности во время проведения турнира.
-5. Заведующим отделением довести распоряжение до кураторов учебных групп и преподавателей.
-6. Контроль за исполнением распоряжения возложить на заместителя директора по воспитательной работе {ФИО заместителя}.
-Директор: И.В. Дарманская
-                </textarea>
+                <textarea id="orderText" rows="10" cols="50" readonly></textarea>
+                <button onclick="downloadOrder()">Скачать распоряжение</button>
             </div>
         </div>
     </div>
@@ -423,83 +412,7 @@ button:hover {
         <p>© Все права защищены Arieshka, 2025.</p>
     </footer>
 <script>
-
-document.getElementById('addTeamRequestForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    const formData = {
-        team_name: document.getElementById('team_name').value,
-        sport_type: document.getElementById('sport_type').value,
-        gender: document.querySelector('input[name="gender"]:checked').value,
-    };
-
-    fetch('/api/add_team_request', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Заявка успешно отправлена!');
-            fetchRequests(); // Обновляем список заявок после отправки
-        } else {
-            alert('Произошла ошибка при отправке заявки.');
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        alert('Произошла ошибка при отправке заявки.');
-    });
-});
-
-function fetchRequests() {
-    fetch('/api/get_requests')
-        .then(response => response.json())
-        .then(data => {
-            const requestsList = document.getElementById('requestsList');
-            requestsList.innerHTML = '';
-            data.requests.forEach(request => {
-                const requestElement = document.createElement('div');
-                requestElement.className = 'request-item';
-                requestElement.innerHTML = `
-                    <h3>${request.team_name}</h3>
-                    <p>Вид спорта: ${request.sport_type}</p>
-                    <p>Пол: ${request.gender}</p>
-                    <p>Статус: ${request.status}</p>
-                    <button onclick="approveRequest(${request.id})">Одобрить</button>
-                `;
-                requestsList.appendChild(requestElement);
-            });
-        })
-        .catch(error => console.error('Ошибка при получении заявок:', error));
-}
-
-function approveRequest(requestId) {
-    fetch('/api/approve_request', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: requestId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Заявка одобрена!');
-            fetchRequests(); // Обновляем список заявок после одобрения
-        } else {
-            alert('Произошла ошибка при одобрении заявки.');
-        }
-    })
-    .catch(error => console.error('Ошибка при одобрении заявки:', error));
-}
-
-
 document.addEventListener('DOMContentLoaded', function() {
-    fetchGroups();
     fetchUserData();
     setupSidebarButtons();
     setupLogoutButton();
@@ -507,342 +420,15 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchNews();
     setupProfilePictureUpload();
     setupInactivityTimer();
-
-    // Загрузка курсов
-    fetch('/api/get_courses')
-        .then(response => response.json())
-        .then(data => {
-            const courseSelect = document.getElementById('course');
-            if (courseSelect) {
-                courseSelect.innerHTML = '';
-                data.courses.forEach(course => {
-                    const option = document.createElement('option');
-                    option.value = course.id;
-                    option.textContent = course.name;
-                    courseSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching courses:', error));
-
-    // Загрузка видов спорта
-    fetch('/api/get_sport_types')
-        .then(response => response.json())
-        .then(data => {
-            const sportTypeSelects = document.querySelectorAll('#sport_type');
-            sportTypeSelects.forEach(select => {
-                select.innerHTML = '';
-                data.sport_types.forEach(sportType => {
-                    const option = document.createElement('option');
-                    option.value = sportType.id;
-                    option.textContent = sportType.name;
-                    select.appendChild(option);
-                });
-            });
-        })
-        .catch(error => console.error('Error fetching sport types:', error));
-
-    // Загрузка полов
-    fetch('/api/get_genders')
-        .then(response => response.json())
-        .then(data => {
-            const genderRadioGroups = document.querySelectorAll('#gender');
-            genderRadioGroups.forEach(group => {
-                group.innerHTML = '';
-                data.genders.forEach(gender => {
-                    const radioInput = document.createElement('input');
-                    radioInput.type = 'radio';
-                    radioInput.id = `gender_${gender.id}`;
-                    radioInput.name = 'gender';
-                    radioInput.value = gender.id;
-                    radioInput.required = true;
-                    const label = document.createElement('label');
-                    label.setAttribute('for', `gender_${gender.id}`);
-                    label.textContent = gender.name;
-                    group.appendChild(radioInput);
-                    group.appendChild(label);
-                    group.appendChild(document.createElement('br'));
-                });
-            });
-        })
-        .catch(error => console.error('Error fetching genders:', error));
-
-    // Загрузка типов мероприятий
-    fetch('/api/get_event_types')
-        .then(response => response.json())
-        .then(data => {
-            const eventTypeSelect = document.getElementById('event_type');
-            if (eventTypeSelect) {
-                eventTypeSelect.innerHTML = '';
-                data.event_types.forEach(eventType => {
-                    const option = document.createElement('option');
-                    option.value = eventType.id;
-                    option.textContent = eventType.name;
-                    eventTypeSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching event types:', error));
-
-    // Загрузка мест проведения
-    fetch('/api/get_locations')
-        .then(response => response.json())
-        .then(data => {
-            const locationSelect = document.getElementById('location');
-            if (locationSelect) {
-                locationSelect.innerHTML = '';
-                data.locations.forEach(location => {
-                    const option = document.createElement('option');
-                    option.value = location.id;
-                    option.textContent = location.name;
-                    locationSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching locations:', error));
-
-// Загрузка наград
-fetch('/api/get_awards')
-    .then(response => response.json())
-    .then(data => {
-        const deleteAwardSelect = document.getElementById('delete_award');
-        if (deleteAwardSelect) {
-            deleteAwardSelect.innerHTML = '';
-            data.awards.forEach(award => {
-                const option = document.createElement('option');
-                option.value = award.id;
-                option.textContent = award.name;
-                deleteAwardSelect.appendChild(option);
-            });
-        }
-    })
-    .catch(error => console.error('Error fetching awards:', error));
-
-    // Загрузка команд
-    fetch('/api/get_commands')
-        .then(response => response.json())
-        .then(data => {
-            const teamSelect = document.getElementById('team_select');
-            const deleteTeamSelect = document.getElementById('delete_team');
-            if (teamSelect) {
-                teamSelect.innerHTML = '';
-                data.commands.forEach(command => {
-                    const option = document.createElement('option');
-                    option.value = command.id;
-                    option.textContent = command.name;
-                    teamSelect.appendChild(option);
-                });
-            }
-            if (deleteTeamSelect) {
-                deleteTeamSelect.innerHTML = '';
-                data.commands.forEach(command => {
-                    const option = document.createElement('option');
-                    option.value = command.id;
-                    option.textContent = command.name;
-                    deleteTeamSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching commands:', error));
-
-    // Загрузка физоргов
-    fetch('/api/get_physorgs')
-        .then(response => response.json())
-        .then(data => {
-            const deletePhysOrgSelect = document.getElementById('delete_physorg');
-            if (deletePhysOrgSelect) {
-                deletePhysOrgSelect.innerHTML = '';
-                data.physorgs.forEach(physorg => {
-                    const option = document.createElement('option');
-                    option.value = physorg.id;
-                    option.textContent = `${physorg.surname} ${physorg.name} ${physorg.patronymic}`;
-                    deletePhysOrgSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching physorgs:', error));
-
-    // Загрузка наград
-    fetch('/api/get_awards')
-        .then(response => response.json())
-        .then(data => {
-            const deleteAwardSelect = document.getElementById('delete_award');
-            if (deleteAwardSelect) {
-                deleteAwardSelect.innerHTML = '';
-                data.awards.forEach(award => {
-                    const option = document.createElement('option');
-                    option.value = award.id;
-                    option.textContent = award.name;
-                    deleteAwardSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error fetching awards:', error));
-
-    // Обработчик формы добавления команды
-    const teamForm = document.getElementById('addTeamForm');
-    if (teamForm) {
-        teamForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const submitButton = teamForm.querySelector('input[type="submit"]');
-            submitButton.disabled = true; // Отключаем кнопку отправки
-            const formData = new FormData(event.target);
-            fetch('/api/add_team', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Команда успешно добавлена');
-                    event.target.reset();
-                } else {
-                    alert('Ошибка при добавлении команды: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Ошибка:', error))
-            .finally(() => {
-                submitButton.disabled = false; // Включаем кнопку обратно
-            });
-        });
-    }
-
-    // Обработчик формы добавления физорга
-    const physOrgForm = document.getElementById('physOrgForm');
-    if (physOrgForm) {
-        physOrgForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const submitButton = physOrgForm.querySelector('input[type="submit"]');
-            submitButton.disabled = true; // Отключаем кнопку отправки
-            const formData = new FormData(event.target);
-            fetch('/api/add_physorg', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Физорг успешно добавлен');
-                    event.target.reset();
-                } else {
-                    alert('Ошибка при добавлении физорга: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Ошибка:', error))
-            .finally(() => {
-                submitButton.disabled = false; // Включаем кнопку обратно
-            });
-        });
-    }
-
-    // Обработчик формы добавления награды
-    const addAwardForm = document.getElementById('addAwardForm');
-    if (addAwardForm) {
-        addAwardForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const submitButton = addAwardForm.querySelector('input[type="submit"]');
-            submitButton.disabled = true; // Отключаем кнопку отправки
-            const formData = new FormData(event.target);
-            fetch('/add_award.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Награда успешно добавлена');
-                    event.target.reset();
-                } else {
-                    alert('Ошибка при добавлении награды: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Ошибка:', error))
-            .finally(() => {
-                submitButton.disabled = false; // Включаем кнопку обратно
-            });
-        });
-    }
-
-    // Обработчик формы добавления мероприятия
-    const addEventForm = document.getElementById('addEventForm');
-    if (addEventForm) {
-        addEventForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const submitButton = addEventForm.querySelector('input[type="submit"]');
-            submitButton.disabled = true; // Отключаем кнопку отправки
-            const formData = new FormData(event.target);
-            fetch('/api/add_event', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Мероприятие успешно добавлено');
-                    event.target.reset();
-                } else {
-                    alert('Ошибка при добавлении мероприятия: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Ошибка:', error))
-            .finally(() => {
-                submitButton.disabled = false; // Включаем кнопку обратно
-            });
-        });
-    }
+    fetchGroups();
+    fetchSportTypes();
+    fetchGenders();
+    fetchEventTypes();
+    fetchLocations();
+    fetchAwards();
+    fetchCommands();
+    fetchPhysOrgs();
 });
-
-function updateTeamMembers() {
-    const sportType = document.querySelector("#teamForm select[name='sport_type']").value;
-    const membersContainer = document.getElementById("team_members_container");
-    if (membersContainer) {
-        membersContainer.innerHTML = '<label for="team_members">Игроки команды:</label><br>';
-        let memberCount;
-        if (sportType === "football") {
-            memberCount = 5;
-        } else if (sportType === "basketball") {
-            memberCount = 3;
-        } else if (sportType === "volleyball") {
-            memberCount = 6;
-        } else {
-            memberCount = 1;
-        }
-        for (let i = 1; i <= memberCount; i++) {
-            const input = document.createElement("input");
-            input.type = "text";
-            input.name = "team_members[]";
-            input.placeholder = `Игрок команды ${i}`;
-            input.required = true;
-            membersContainer.appendChild(input);
-            membersContainer.appendChild(document.createElement('br'));
-        }
-    }
-}
-
-document.querySelector("#teamForm select[name='sport_type']").addEventListener('change', updateTeamMembers);
-
-function fetchGroups() {
-    fetch('/api/get_groups')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            const groupSelects = document.querySelectorAll('#group');
-            groupSelects.forEach(select => {
-                select.innerHTML = '';
-                data.groups.forEach(group => {
-                    const option = document.createElement('option');
-                    option.value = group.name;
-                    option.textContent = group.name;
-                    select.appendChild(option);
-                });
-            });
-        })
-        .catch(error => console.error('Error fetching groups:', error));
-}
 
 function fetchUserData() {
     fetch('/api/user_data')
@@ -875,7 +461,10 @@ function setupSidebarButtons() {
             else if (action === 'showEditStatisticForm') formId = 'editStatisticForm';
             else if (action === 'showNewsForm') formId = 'newsForm';
             else if (action === 'showAwardsForm') formId = 'awardsForm';
-            else if (action === 'showApproveRequests') formId = 'approveRequestsForm';
+            else if (action === 'showApproveRequests') {
+                formId = 'approveRequestsForm';
+                fetchRequests();
+            }
             showForm(formId);
         });
     });
@@ -889,6 +478,10 @@ function showForm(formId) {
     const formToShow = document.getElementById(formId);
     if (formToShow) {
         formToShow.style.display = 'block';
+        if (formId === 'editStatisticForm') {
+            fetchEvents();
+            fetchTeams();
+        }
     }
 }
 
@@ -917,7 +510,7 @@ function setupFormHandlers() {
         form.addEventListener('submit', function(event) {
             event.preventDefault();
             const submitButton = form.querySelector('input[type="submit"]');
-            submitButton.disabled = true; // Отключаем кнопку отправки
+            submitButton.disabled = true;
             const formData = new FormData(form);
             const action = form.getAttribute('action');
             fetch(action, {
@@ -935,7 +528,7 @@ function setupFormHandlers() {
             })
             .catch(error => console.error('Ошибка:', error))
             .finally(() => {
-                submitButton.disabled = false; // Включаем кнопку обратно
+                submitButton.disabled = false;
             });
         });
     });
@@ -960,6 +553,68 @@ function fetchNews() {
             });
         })
         .catch(error => console.error('Ошибка при получении новостей:', error));
+}
+
+function fetchEvents() {
+    fetch('/api/get_events')
+        .then(response => response.json())
+        .then(data => {
+            const eventSelect = document.getElementById('event_select');
+            eventSelect.innerHTML = '';
+            data.events.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                option.textContent = event.name;
+                eventSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error fetching events:', error));
+}
+
+function fetchTeams() {
+    fetch('/api/get_commands')
+        .then(response => response.json())
+        .then(data => {
+            const firstPlaceSelect = document.getElementById('first_place');
+            const secondPlaceSelect = document.getElementById('second_place');
+            const thirdPlaceSelect = document.getElementById('third_place');
+            [firstPlaceSelect, secondPlaceSelect, thirdPlaceSelect].forEach(select => {
+                select.innerHTML = '';
+                data.commands.forEach(command => {
+                    const option = document.createElement('option');
+                    option.value = command.id;
+                    option.textContent = command.name;
+                    select.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching teams:', error));
+}
+
+function submitStatistic() {
+    const formData = {
+        event_id: document.getElementById('event_select').value,
+        first_place: document.getElementById('first_place').value,
+        second_place: document.getElementById('second_place').value,
+        third_place: document.getElementById('third_place').value
+    };
+
+    fetch('/api/update_statistics', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Результаты успешно обновлены');
+        } else {
+            alert('Ошибка при обновлении результатов: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Ошибка:', error));
 }
 
 function setupProfilePictureUpload() {
@@ -1024,7 +679,7 @@ function closeUploadModal() {
 }
 
 function setupInactivityTimer() {
-    const inactivityDuration = 3600000; // 1 час
+    const inactivityDuration = 3600000;
     let inactivityTimeout;
 
     function startInactivityTimer() {
@@ -1071,70 +726,254 @@ function generatePassword() {
     document.getElementById('password').value = password;
 }
 
+function fetchGroups() {
+    fetch('/api/get_groups')
+        .then(response => response.json())
+        .then(data => {
+            const groupSelects = document.querySelectorAll('#group');
+            groupSelects.forEach(select => {
+                select.innerHTML = '';
+                data.groups.forEach(group => {
+                    const option = document.createElement('option');
+                    option.value = group.name;
+                    option.textContent = group.name;
+                    select.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching groups:', error));
+}
+
+function fetchSportTypes() {
+    fetch('/api/get_sport_types')
+        .then(response => response.json())
+        .then(data => {
+            const sportTypeSelects = document.querySelectorAll('#sport_type');
+            sportTypeSelects.forEach(select => {
+                select.innerHTML = '';
+                data.sport_types.forEach(sportType => {
+                    const option = document.createElement('option');
+                    option.value = sportType.id;
+                    option.textContent = sportType.name;
+                    select.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching sport types:', error));
+}
+
+function fetchGenders() {
+    fetch('/api/get_genders')
+        .then(response => response.json())
+        .then(data => {
+            const genderRadioGroups = document.querySelectorAll('#gender');
+            genderRadioGroups.forEach(group => {
+                group.innerHTML = '';
+                data.genders.forEach(gender => {
+                    const radioInput = document.createElement('input');
+                    radioInput.type = 'radio';
+                    radioInput.id = `gender_${gender.id}`;
+                    radioInput.name = 'gender';
+                    radioInput.value = gender.id;
+                    radioInput.required = true;
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `gender_${gender.id}`);
+                    label.textContent = gender.name;
+                    group.appendChild(radioInput);
+                    group.appendChild(label);
+                    group.appendChild(document.createElement('br'));
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching genders:', error));
+}
+
+function fetchEventTypes() {
+    fetch('/api/get_event_types')
+        .then(response => response.json())
+        .then(data => {
+            const eventTypeSelect = document.getElementById('event_type');
+            if (eventTypeSelect) {
+                eventTypeSelect.innerHTML = '';
+                data.event_types.forEach(eventType => {
+                    const option = document.createElement('option');
+                    option.value = eventType.id;
+                    option.textContent = eventType.name;
+                    eventTypeSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error fetching event types:', error));
+}
+
+function fetchLocations() {
+    fetch('/api/get_locations')
+        .then(response => response.json())
+        .then(data => {
+            const locationSelect = document.getElementById('location');
+            if (locationSelect) {
+                locationSelect.innerHTML = '';
+                data.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    locationSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error fetching locations:', error));
+}
+
+function fetchAwards() {
+    fetch('/api/get_awards')
+        .then(response => response.json())
+        .then(data => {
+            const deleteAwardSelect = document.getElementById('delete_award');
+            if (deleteAwardSelect) {
+                deleteAwardSelect.innerHTML = '';
+                data.awards.forEach(award => {
+                    const option = document.createElement('option');
+                    option.value = award.id;
+                    option.textContent = award.name;
+                    deleteAwardSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error fetching awards:', error));
+}
+
+function fetchCommands() {
+    fetch('/api/get_commands')
+        .then(response => response.json())
+        .then(data => {
+            const teamSelect = document.getElementById('team_select');
+            const deleteTeamSelect = document.getElementById('delete_team');
+            if (teamSelect) {
+                teamSelect.innerHTML = '';
+                data.commands.forEach(command => {
+                    const option = document.createElement('option');
+                    option.value = command.id;
+                    option.textContent = command.name;
+                    teamSelect.appendChild(option);
+                });
+            }
+            if (deleteTeamSelect) {
+                deleteTeamSelect.innerHTML = '';
+                data.commands.forEach(command => {
+                    const option = document.createElement('option');
+                    option.value = command.id;
+                    option.textContent = command.name;
+                    deleteTeamSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error fetching commands:', error));
+}
+
+function fetchPhysOrgs() {
+    fetch('/api/get_physorgs')
+        .then(response => response.json())
+        .then(data => {
+            const deletePhysOrgSelect = document.getElementById('delete_physorg');
+            if (deletePhysOrgSelect) {
+                deletePhysOrgSelect.innerHTML = '';
+                data.physorgs.forEach(physorg => {
+                    const option = document.createElement('option');
+                    option.value = physorg.id;
+                    option.textContent = `${physorg.surname} ${physorg.name} ${physorg.patronymic}`;
+                    deletePhysOrgSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error fetching physorgs:', error));
+}
+
+function fetchRequests() {
+    fetch('/api/get_requests')
+        .then(response => response.json())
+        .then(data => {
+            const requestsList = document.getElementById('requestsList');
+            requestsList.innerHTML = '';
+            data.requests.forEach(request => {
+                const requestElement = document.createElement('div');
+                requestElement.className = 'request-item';
+                requestElement.innerHTML = `
+                    <h3>${request.teamName}</h3>
+                    <p>Вид спорта: ${request.sportType}</p>
+                    <p>Пол: ${request.gender}</p>
+                    <p>Статус: ${request.status}</p>
+                    <button onclick="approveRequest(${request.id})">Одобрить</button>
+                `;
+                requestsList.appendChild(requestElement);
+            });
+        })
+        .catch(error => console.error('Ошибка при получении заявок:', error));
+}
+
+function approveRequest(requestId) {
+    fetch('/api/approve_request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: requestId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Заявка одобрена!');
+            fetchRequests();
+        } else {
+            alert('Произошла ошибка при одобрении заявки.');
+        }
+    })
+    .catch(error => console.error('Ошибка при одобрении заявки:', error));
+}
+
 function generateOrder() {
+    const date = new Date().toLocaleDateString();
+    const eventDate = document.getElementById('event_date').value;
+    const eventName = document.getElementById('event_name').value;
+    const year = new Date().getFullYear();
+
+    const orderText = `
+Автономное профессиональное образовательное учреждение
+Вологодской области
+«Вологодский колледж связи и информационных технологий»
+**РАСПОРЯЖЕНИЕ**
+${date} № ______
+г. Вологда
+В связи с участием в ${eventName}, проводимого ${eventDate}, среди команд студентов, обучающихся по программам среднего профессионального образования в образовательных организациях Вологодской области в спортивном сезоне ${year} года,
+ПРЕДЛАГАЮ:
+1. Освободить от учебных занятий ${eventDate} следующих студентов:
+  - {ФИО студента 1}, {группа}
+  - {ФИО студента 2}, {группа}
+  - {ФИО студента 3}, {группа}
+  - {ФИО студента 4}, {группа}
+2. Студентам, задействованным в мероприятии, заранее получить у преподавателей задание для отработки пропущенного материала.
+3. Преподавателям обеспечить сдачу промежуточной аттестации, совпадающей со сроками проведения мероприятия, в иные даты в рабочем порядке.
+4. Преподавателю физической культуры {ФИО преподавателя} провести со студентами инструктаж по технике безопасности во время проведения турнира.
+5. Заведующим отделением довести распоряжение до кураторов учебных групп и преподавателей.
+6. Контроль за исполнением распоряжения возложить на заместителя директора по воспитательной работе {ФИО заместителя}.
+Директор: И.В. Дарманская
+    `;
+
+    document.getElementById('orderText').value = orderText;
     document.getElementById('orderTemplate').style.display = 'block';
 }
 
-function deleteTeam() {
-    const teamId = document.getElementById('delete_team').value;
-    fetch('/api/delete_team', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: teamId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Команда успешно удалена');
-        } else {
-            alert('Ошибка при удалении команды: ' + data.message);
-        }
-    })
-    .catch(error => console.error('Ошибка:', error));
+function downloadOrder() {
+    const orderText = document.getElementById('orderText').value;
+    const blob = new Blob([orderText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Распоряжение.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
-
-function deletePhysOrg() {
-    const physorgId = document.getElementById('delete_physorg').value;
-    fetch('/api/delete_physorg', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: physorgId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Физорг успешно удален');
-        } else {
-            alert('Ошибка при удалении физорга: ' + data.message);
-        }
-    })
-    .catch(error => console.error('Ошибка:', error));
-}
-
-function deleteAward() {
-    const awardId = document.getElementById('delete_award').value;
-    fetch('/api/delete_award', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: awardId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Награда успешно удалена');
-        } else {
-            alert('Ошибка при удалении награды: ' + data.message);
-        }
-    })
-    .catch(error => console.error('Ошибка:', error));
-}
-
 </script>
 </body>
 </html>
