@@ -1038,7 +1038,7 @@
         }
 
 
-  function fetchRequests() {
+function fetchRequests() {
     fetch('/api/get_requests')
         .then(response => {
             if (!response.ok) {
@@ -1047,7 +1047,7 @@
             return response.json();
         })
         .then(data => {
-            console.log('Received data:', data); // Отладочное сообщение для проверки данных
+            console.log('Received data:', data);
 
             const requestsList = document.getElementById('requestsList');
             requestsList.innerHTML = '';
@@ -1057,26 +1057,31 @@
                 return;
             }
 
-            // Сортировка заявок: сначала не одобренные, затем одобренные
             data.requests.sort((a, b) => {
                 const statusOrder = { 'pending': 1, 'approved': 2, 'rejected': 3 };
                 return statusOrder[a.status] - statusOrder[b.status];
             });
 
             data.requests.forEach(request => {
-                console.log('Request data:', request); // Отладочное сообщение для проверки данных заявки
+                console.log('Request data:', request);
 
                 const requestElement = document.createElement('div');
                 requestElement.className = 'request-item';
                 const statusClass = `status-${request.status.toLowerCase()}`;
 
-                // Используйте правильные ключи из ответа сервера
+                let teamMembersHtml = '<h4>Участники:</h4><ul>';
+                request.team_members.forEach(member => {
+                    teamMembersHtml += `<li>${member.surname} ${member.name} ${member.patronymic}, Группа: ${member.group}</li>`;
+                });
+                teamMembersHtml += '</ul>';
+
                 requestElement.innerHTML = `
                     <h3>Заявка на участие в ${request.event_name || 'Неизвестное мероприятие'}</h3>
                     <p>Название команды: ${request.team_name || 'Не указано'}</p>
                     <p>Вид спорта: ${request.sport_type_name || 'Неизвестный вид спорта'}</p>
                     <p>Пол: ${request.gender === 1 ? 'Мужской' : request.gender === 2 ? 'Женский' : 'Неизвестно'}</p>
                     <p>Статус: <span class="${statusClass}">${getStatusText(request.status)}</span></p>
+                    ${teamMembersHtml}
                     <button onclick="approveRequest(${request.id})">Одобрить</button>
                 `;
                 requestsList.appendChild(requestElement);
@@ -1114,13 +1119,23 @@ function approveRequest(requestId) {
     .catch(error => console.error('Ошибка при одобрении заявки:', error));
 }
 
-        function generateOrder() {
-            const date = new Date().toLocaleDateString();
-            const eventDate = document.getElementById('event_date').value;
-            const eventName = document.getElementById('event_name').value;
-            const year = new Date().getFullYear();
+ function generateOrder() {
+    const date = new Date().toLocaleDateString();
+    const eventSelect = document.getElementById('event_select');
+    const eventName = eventSelect.options[eventSelect.selectedIndex].text;
+    const eventDate = document.getElementById('event_date').value;
+    const year = new Date().getFullYear();
 
-            const orderText = `
+    // Получаем участников из выбранной заявки
+    const selectedRequest = data.requests.find(request => request.event_name === eventName);
+    let teamMembersHtml = '';
+    if (selectedRequest && selectedRequest.team_members) {
+        teamMembersHtml = selectedRequest.team_members.map(member =>
+            `- ${member.surname} ${member.name} ${member.patronymic}, ${member.group}`
+        ).join('\n');
+    }
+
+    const orderText = `
 Автономное профессиональное образовательное учреждение
 Вологодской области
 «Вологодский колледж связи и информационных технологий»
@@ -1130,21 +1145,18 @@ ${date} № ______
 В связи с участием в ${eventName}, проводимого ${eventDate}, среди команд студентов, обучающихся по программам среднего профессионального образования в образовательных организациях Вологодской области в спортивном сезоне ${year} года,
 ПРЕДЛАГАЮ:
 1. Освободить от учебных занятий ${eventDate} следующих студентов:
- - {ФИО студента 1}, {группа}
- - {ФИО студента 2}, {группа}
- - {ФИО студента 3}, {группа}
- - {ФИО студента 4}, {группа}
+${teamMembersHtml}
 2. Студентам, задействованным в мероприятии, заранее получить у преподавателей задание для отработки пропущенного материала.
 3. Преподавателям обеспечить сдачу промежуточной аттестации, совпадающей со сроками проведения мероприятия, в иные даты в рабочем порядке.
 4. Преподавателю физической культуры {ФИО преподавателя} провести со студентами инструктаж по технике безопасности во время проведения турнира.
 5. Заведующим отделением довести распоряжение до кураторов учебных групп и преподавателей.
 6. Контроль за исполнением распоряжения возложить на заместителя директора по воспитательной работе {ФИО заместителя}.
 Директор: И.В. Дарманская
-            `;
+    `;
 
-            document.getElementById('orderText').value = orderText;
-            document.getElementById('orderTemplate').style.display = 'block';
-        }
+    document.getElementById('orderText').value = orderText;
+    document.getElementById('orderTemplate').style.display = 'block';
+}
 
         function downloadOrder() {
             const orderText = document.getElementById('orderText').value;

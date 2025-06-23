@@ -12,244 +12,243 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/dark theme.js') }}" defer></script>
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 50px;
+        }
+
+        .teams-container {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .team-header {
+            width: 90%;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            background-color: #59088894;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .course-table {
+            width: 90%;
+            border-collapse: collapse;
+            background-color: #69248ba4;
+            color: #ffffff;
+            font-size: 18px;
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .course-table th, .course-table td {
+            border: 1px solid #ffffff;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .course-table th {
+            background-color: #5a0888;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .course-table .course-row td {
+            background-color: #4a0668;
+            font-weight: bold;
+        }
+
+        .course-table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .statistics-section {
+            flex: 1;
+            margin-left: 10px;
+            margin-right: 20px;
+        }
+
+        .rating {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            background-color: #6b237654;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+        }
+
+        .statistics-table {
+            width: 90%;
+            border-collapse: collapse;
+            background-color: #69248ba4;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-left: 10px;
+        }
+
+        .statistics-table th, .statistics-table td {
+            border: 1px solid #ffffff;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .statistics-table th {
+            background-color: #5a0888;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .statistics-table tr:nth-child(1) {
+            background-color: gold;
+        }
+
+        .statistics-table tr:nth-child(2) {
+            background-color: silver;
+        }
+
+        .statistics-table tr:nth-child(3) {
+            background-color: #cd7f32;
+        }
+
+        .statistics-table tr:nth-child(n+4) {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            background: linear-gradient(#5a0888, #4a0668);
+            color: #000;
+            padding: 10px 0;
+        }
+
+        .club-teams-header {
+            width: 90%;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            background-color: #59088894;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .club-teams-section {
+            width: 90%;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .club-teams-section h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 22px;
+            background-color: #6b237654;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+        }
+
+        .club-teams-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .club-teams-section .team-card {
+            width: 300px;
+            height: 400px;
+            background-color: #6b2376;
+            color: #ffffff;
+            border: 6px solid #5a0888;
+            border-radius: 10px;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+            cursor: pointer;
+        }
+
+        .club-teams-section .team-card:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .club-teams-section .team-card h3 {
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            padding-top: 100px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
-
-<style>
-.container {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    padding: 20px;
-    margin-top: 20px;
-    margin-bottom: 50px;
-}
-
-.teams-container {
-    flex: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.team-header {
-    width: 90%;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    background-color: #59088894;
-    color: white;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.course-table {
-    width: 90%;
-    border-collapse: collapse;
-    background-color: #69248ba4;
-    color: #ffffff;
-    font-size: 18px;
-    margin: 20px auto;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.course-table th, .course-table td {
-    border: 1px solid #ffffff;
-    padding: 12px;
-    text-align: center;
-}
-
-.course-table th {
-    background-color: #5a0888;
-    color: #ffffff;
-    font-size: 20px;
-    font-weight: bold;
-}
-
-.course-table .course-row td {
-    background-color: #4a0668;
-    font-weight: bold;
-}
-
-.course-table tr:nth-child(even) {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
- .statistics-section {
-        flex: 1;
-        margin-left: 10px;
-        margin-right: 20px;
-    }
-
-    .rating {
-        text-align: center;
-        margin-bottom: 20px;
-        font-size: 24px;
-        background-color: #6b237654;
-        color: white;
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        width: 90%;
-    }
-
-    .statistics-table {
-        width: 90%;
-        border-collapse: collapse;
-        background-color: #69248ba4;
-        color: #ffffff;
-        font-size: 20px;
-        font-weight: bold;
-        margin: 20px auto;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        margin-left: 10px;
-    }
-
-    .statistics-table th, .statistics-table td {
-        border: 1px solid #ffffff;
-        padding: 15px;
-        text-align: center;
-    }
-
-    .statistics-table th {
-        background-color: #5a0888;
-        color: #ffffff;
-        font-size: 24px;
-        font-weight: bold;
-    }
-.statistics-table tr:nth-child(1) {
-    background-color: gold; /* Первое место */
-}
-
-.statistics-table tr:nth-child(2) {
-    background-color: silver; /* Второе место */
-}
-
-.statistics-table tr:nth-child(3) {
-    background-color: #cd7f32; /* Третье место */
-}
-
-.statistics-table tr:nth-child(n+4) {
-    background-color: rgba(255, 255, 255, 0.1); /* Остальные строки */
-}
-
-footer {
-    text-align: center;
-    background: linear-gradient(#5a0888, #4a0668);
-    color: #000;
-    padding: 10px 0;
-}
-
-.club-teams-header {
-    width: 90%;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    background-color: #59088894;
-    color: white;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.club-teams-section {
-    width: 90%;
-    margin: 20px auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.club-teams-section h3 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 22px;
-    background-color: #6b237654;
-    color: white;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 100%;
-}
-
-.club-teams-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-}
-
-.club-teams-section .team-card {
-    width: 300px;
-    height: 400px;
-    background-color: #6b2376;
-    color: #ffffff;
-    border: 6px solid #5a0888;
-    border-radius: 10px;
-    margin: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 20px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s, transform 0.3s;
-    cursor: pointer;
-}
-
-.club-teams-section .team-card:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-}
-
-.club-teams-section .team-card h3 {
-    margin: 10px 0;
-    flex-wrap: wrap;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    padding-top: 100px;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.9);
-}
-
-.modal-content {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-}
-
-.close {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    transition: 0.3s;
-}
-
-.close:hover,
-.close:focus {
-    color: #bbb;
-    text-decoration: none;
-    cursor: pointer;
-}
-</style>
-
 <body>
 <header>
     <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
@@ -327,7 +326,7 @@ footer {
 
     <section class="statistics-section">
         <h2 class="rating">Статистика</h2>
-            <table class="statistics-table" id="commands-table">
+        <table class="statistics-table" id="commands-table">
             <thead>
                 <tr>
                     <th>№</th>
@@ -403,12 +402,11 @@ window.onclick = function(event) {
     }
 }
 
- fetch('/api/get_commands')
+fetch('/api/get_commands')
     .then(response => response.json())
     .then(data => {
         const tbody = document.querySelector('#commands-table tbody');
         tbody.innerHTML = '';
-        // Используем slice для отображения только первых 10 команд
         data.commands.slice(0, 10).forEach((cmd, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${index + 1}</td><td>${cmd.name}</td>`;
@@ -416,26 +414,6 @@ window.onclick = function(event) {
         });
     })
     .catch(error => console.error('Ошибка загрузки команд:', error));
-
-fetch('/api/get_statistics')
-    .then(response => response.json())
-    .then(data => {
-        const tbody = document.querySelector('#commands-table tbody');
-        tbody.innerHTML = '';
-        data.statistics.forEach((stat, index) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${stat.name}</td>
-                <td>${stat.wins}</td>
-                <td>${stat.losses}</td>
-                <td>${stat.activities}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    })
-    .catch(error => console.error('Ошибка загрузки статистики:', error));
 </script>
-
 </body>
 </html>
