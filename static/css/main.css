@@ -217,8 +217,8 @@ main {
 /* Подвал сайта */
 footer {
     text-align: center;
-    background-color: #dc3545;
-    color: white;
+    background-color: #dc3545; /* Такой же цвет, как у шапки */
+    color: white; /* Белый цвет текста */
     padding: 10px 0;
     height: 3%;
 }
