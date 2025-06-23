@@ -122,10 +122,10 @@ class StudentInCommand(db.Model):
     patronymic = Column(String(50), nullable=True)
     groupID = Column(Integer, ForeignKey('Group.id'), nullable=False)
     requestID = Column(Integer, ForeignKey('Request.id'), nullable=False)
-    commandID = Column(Integer, ForeignKey('Command.id'), nullable=True)  
+    commandID = Column(Integer, ForeignKey('Command.id'), nullable=True)
 
-    # Связь с таблицей Request
     request = relationship("Request", back_populates="students")
+    group = relationship("Group")  
 
 class SportType(db.Model):
     __tablename__ = 'SportType'

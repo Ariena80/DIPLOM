@@ -172,6 +172,7 @@ class StudentInCommand(db.Model):
     commandID = Column(Integer, ForeignKey('Command.id'), nullable=True)
 
     request = relationship("Request", back_populates="students")
+    group = relationship("Group") 
 
 class SportType(db.Model):
     __tablename__ = 'SportType'
@@ -498,10 +499,10 @@ def get_requests():
             return jsonify({'error': 'Пользователь не найден'}), 404
 
         if user.roleID == 1:
-            requests = Request.query.options(joinedload(Request.event), joinedload(Request.sportType)).all()
+            requests = Request.query.options(joinedload(Request.event), joinedload(Request.sportType), joinedload(Request.students)).all()
             logging.info(f'Администратор {user_id} запросил все заявки. Найдено {len(requests)} заявок.')
         else:
-            requests = Request.query.filter_by(userID=user_id).options(joinedload(Request.event), joinedload(Request.sportType)).all()
+            requests = Request.query.filter_by(userID=user_id).options(joinedload(Request.event), joinedload(Request.sportType), joinedload(Request.students)).all()
             logging.info(f'Пользователь {user_id} запросил свои заявки. Найдено {len(requests)} заявок.')
 
         requests_list = [{
@@ -511,14 +512,12 @@ def get_requests():
             'sport_type_name': req.sportType.name if req.sportType else 'Не указан',
             'gender': req.genderID,
             'status': req.status,
-            'team_members': [
-                {
-                    'surname': student.surname,
-                    'name': student.name,
-                    'patronymic': student.patronymic
-                }
-                for student in req.students
-            ]
+            'team_members': [{
+                'surname': student.surname,
+                'name': student.name,
+                'patronymic': student.patronymic,
+                'group': student.group.name if student.group else 'Не указана'
+            } for student in req.students]
         } for req in requests]
 
         return jsonify({'requests': requests_list})
