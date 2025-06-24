@@ -132,15 +132,16 @@
         }
 
         footer {
-            background-color: #333;
-            color: white;
+            position: fixed; /* Зафиксировать футер в окне */
+            bottom: 0; /* Расположить у нижнего края окна */
+            width: 100%; /* Занять всю ширину */
             text-align: center;
-            padding: 10px;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
+            background-color: #dc3545; /* Такой же цвет, как у шапки */
+            color: white; /* Белый цвет текста */
+            padding: 10px 0;
+            height: 4%;
+            z-index: 1000; /* Убедитесь, что футер поверх другого контента */
         }
-
         .profile-info-row {
             margin-bottom: 10px;
         }

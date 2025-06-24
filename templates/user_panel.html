@@ -17,6 +17,7 @@
             padding: 0;
             background-color: #f4f4f9;
             color: #333;
+            padding-bottom: 50px; 
         }
 
         .main-container {
@@ -133,11 +134,15 @@
 
        /* Подвал сайта */
         footer {
+            position: fixed; /* Зафиксировать футер в окне */
+            bottom: 0; /* Расположить у нижнего края окна */
+            width: 100%;
             text-align: center;
-            background-color: #dc3545;
-            color: white;
+            background-color: #dc3545; /* Такой же цвет, как у шапки */
+            color: white; /* Белый цвет текста */
             padding: 10px 0;
             height: 3%;
+            z-index: 1000; /* Убедитесь, что футер поверх другого контента */
         }
         .profile-info-row {
             margin-bottom: 10px;
@@ -448,6 +453,10 @@
                     <div class="form-group">
                         <label for="description">Описание:</label>
                         <textarea id="description" name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="event_image">Изображение мероприятия:</label>
+                        <input type="file" id="event_image" name="event_image" accept="image/*">
                     </div>
                     <div class="form-group">
                         <input type="submit" value="Добавить мероприятие">
@@ -870,6 +879,30 @@ function generatePassword() {
     document.getElementById('password').value = password;
 }
 
+function deleteAward() {
+    const awardId = document.getElementById('delete_award').value;
+
+    fetch('/api/delete_award', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: awardId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Награда успешно удалена');
+            fetchAwards(); // Обновите список наград после удаления
+        } else {
+            alert('Ошибка при удалении награды: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Ошибка:', error));
+}
+
+
+
 function fetchGroups() {
     fetch('/api/get_groups')
         .then(response => response.json())
@@ -1032,6 +1065,50 @@ function fetchPhysOrgs() {
         .catch(error => console.error('Error fetching physorgs:', error));
 }
 
+
+function deletePhysOrg() {
+    const physorgId = document.getElementById('delete_physorg').value;
+
+    fetch('/api/delete_physorg', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: physorgId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Физорг успешно удален');
+            // Обновите список физоргов или выполните другие действия по необходимости
+        } else {
+            alert('Ошибка при удалении физорга: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Ошибка:', error));
+}
+
+function deleteTeam() {
+    const teamId = document.getElementById('delete_team').value;
+
+    fetch('/api/delete_team', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: teamId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Команда успешно удалена');
+        } else {
+            alert('Ошибка при удалении команды: ' + data.message);
+        }
+    })
+    .catch(error => console.error('Ошибка:', error));
+}
+
 function fetchRequests() {
     fetch('/api/get_requests')
         .then(response => {
@@ -1110,30 +1187,17 @@ function approveRequest(requestId) {
 }
 
 function generateOrder() {
-    const selectedRequests = Array.from(document.querySelectorAll('input[name="request"]:checked')).map(checkbox => checkbox.value);
+    // Статические данные участников
+    const teamMembers = [
+        "Морозова Арина Игоревна, Группа: ИСП-421п",
+        "Сакичева Аксинья Федоровна, Группа: ИСП-421П",
+        "Голованова Алина Викторовна, Группа: ИСП-421П",
+        "Засоба Злата Евгеньевна, Группа: ИСП-421П"
+    ];
 
-    fetch('/api/get_students_in_requests', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ request_ids: selectedRequests })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(`Server responded with status ${response.status}: ${text}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        let teamMembersHtml = data.students.map(student =>
-            `- ${student.surname} ${student.name} ${student.patronymic}, ${student.group}`
-        ).join('\n');
+    const teamMembersHtml = teamMembers.join('\n');
 
-        const orderText = `
+    const orderText = `
 Автономное профессиональное образовательное учреждение
 Вологодской области
 «Вологодский колледж связи и информационных технологий»
@@ -1148,26 +1212,20 @@ ${teamMembersHtml || 'Участники не загружены'}
 3. Преподавателям обеспечить сдачу промежуточной аттестации, совпадающей со сроками проведения мероприятия, в иные даты в рабочем порядке.
 4. Преподавателю физической культуры {ФИО преподавателя} провести со студентами инструктаж по технике безопасности во время проведения турнира.
 5. Заведующим отделением довести распоряжение до кураторов учебных групп и преподавателей.
-6. Контроль за исполнением распоряжения возложить на заместителя директора по воспитательной работе {ФИО заместителя}.
+6. Контроль за исполнением распоряжения возложить на заместителя директора по воспитательной работе Шамахову К.А.
 Директор: И.В. Дарманская
-        `;
+    `;
 
-        const orderTextElement = document.getElementById('orderText');
-        if (orderTextElement) {
-            orderTextElement.value = orderText;
-        }
+    const orderTextElement = document.getElementById('orderText');
+    if (orderTextElement) {
+        orderTextElement.value = orderText;
+    }
 
-        const orderTemplateElement = document.getElementById('orderTemplate');
-        if (orderTemplateElement) {
-            orderTemplateElement.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка при получении данных студентов:', error);
-        alert(`Ошибка при получении данных студентов: ${error.message}`);
-    });
+    const orderTemplateElement = document.getElementById('orderTemplate');
+    if (orderTemplateElement) {
+        orderTemplateElement.style.display = 'block';
+    }
 }
-
 function editOrder() {
     const orderTextElement = document.getElementById('orderText');
     if (orderTextElement) {
@@ -1177,9 +1235,7 @@ function editOrder() {
         }
     }
 }
-
 function downloadOrder() {
-    const { jsPDF } = window.jspdf;
     const orderText = document.getElementById('orderText').value;
 
     if (!orderText) {
@@ -1187,13 +1243,31 @@ function downloadOrder() {
         return;
     }
 
-    const doc = new jsPDF();
-    doc.setFont("helvetica");
-    doc.setFontSize(12);
-    doc.text(orderText, 10, 10);
-
-    doc.save('Распоряжение.pdf');
+    fetch('/api/generate_docx', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderText: orderText })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Распоряжение.docx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => console.error('Ошибка при скачивании файла:', error));
 }
+
     </script>
 </body>
 </html>

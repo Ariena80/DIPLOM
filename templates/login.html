@@ -11,6 +11,20 @@
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/dark theme.js') }}" defer></script>
 </head>
+<style>
+    footer {
+    position: fixed; /* Зафиксировать футер в окне */
+    bottom: 0; /* Расположить у нижнего края окна */
+    width: 100%; /* Занять всю ширину */
+    text-align: center;
+    background-color: #dc3545; /* Такой же цвет, как у шапки */
+    color: white; /* Белый цвет текста */
+    padding: 10px 0;
+    height: 3%;
+    z-index: 1000; /* Убедитесь, что футер поверх другого контента */
+}
+
+</style>
 <body>
     <header>
         <img src="{{ url_for('static', filename='style/logotip.png') }}" alt="Логотип" height="100%" width="4%">
@@ -33,6 +47,10 @@
             <button type="button" onclick="loginUser()">Войти</button>
         </form>
     </div>
+
+    <footer>
+        <p>© А.И.Морозова Все права защищены, 2025.</p>
+    </footer>
     <script>
         function loginUser() {
             const login = document.getElementById('login').value;

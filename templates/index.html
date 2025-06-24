@@ -581,160 +581,185 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('/api/get_news')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+document.addEventListener('DOMContentLoaded', function() {
+    // Загрузка новостей
+    fetch('/api/get_news')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const newsContainer = document.getElementById('news-container');
+            newsContainer.innerHTML = '';
+
+            data.news.forEach((newsItem, index) => {
+                const newsCard = document.createElement('div');
+                newsCard.className = 'news_card';
+                newsCard.id = `news_card_${index + 1}`;
+                newsCard.style.backgroundImage = `url('${newsItem.imageURL}')`;
+                newsCard.onclick = () => openModal(newsItem);
+
+                const newsContent = document.createElement('div');
+                newsContent.className = 'news_content';
+
+                const title = document.createElement('h2');
+                title.textContent = newsItem.title;
+
+                const content = document.createElement('p');
+                const words = newsItem.description.split(' ');
+                let lines = [];
+                let currentLine = '';
+                words.forEach(word => {
+                    if (currentLine.length + word.length + 1 > 50) {
+                        lines.push(currentLine.trim());
+                        currentLine = '';
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    const newsContainer = document.getElementById('news-container');
-                    newsContainer.innerHTML = '';
-
-                    data.news.forEach((newsItem, index) => {
-                        const newsCard = document.createElement('div');
-                        newsCard.className = 'news_card';
-                        newsCard.id = `news_card_${index + 1}`;
-                        newsCard.style.backgroundImage = `url('${newsItem.imageURL}')`;
-                        newsCard.onclick = () => openModal(newsItem);
-
-                        const newsContent = document.createElement('div');
-                        newsContent.className = 'news_content';
-
-                        const title = document.createElement('h2');
-                        title.textContent = newsItem.title;
-
-                        const content = document.createElement('p');
-                        const words = newsItem.description.split(' ');
-                        let lines = [];
-                        let currentLine = '';
-                        words.forEach(word => {
-                            if (currentLine.length + word.length + 1 > 50) {
-                                lines.push(currentLine.trim());
-                                currentLine = '';
-                            }
-                            currentLine += word + ' ';
-                        });
-                        if (currentLine.trim()) {
-                            lines.push(currentLine.trim());
-                        }
-                        let truncatedContent = lines.slice(0, 5).join(' ');
-                        if (lines.length > 5) {
-                            truncatedContent += '...';
-                        }
-                        content.innerHTML = truncatedContent;
-
-                        newsContent.appendChild(title);
-                        newsContent.appendChild(content);
-                        newsCard.appendChild(newsContent);
-                        newsContainer.appendChild(newsCard);
-                    });
-                })
-                .catch(error => console.error('Ошибка загрузки новостей:', error));
-
-            function openModal(newsItem) {
-                document.getElementById('modalTitle').innerText = newsItem.title;
-                document.getElementById('modalContent').innerHTML = newsItem.description;
-                document.getElementById('modalImage').src = newsItem.imageURL;
-                document.getElementById('newsModal').style.display = 'flex';
-            }
-
-            function closeModal() {
-                document.getElementById('newsModal').style.display = 'none';
-            }
-
-            window.onclick = function(event) {
-                const modal = document.getElementById('newsModal');
-                if (event.target == modal) {
-                    closeModal();
+                    currentLine += word + ' ';
+                });
+                if (currentLine.trim()) {
+                    lines.push(currentLine.trim());
                 }
-            };
-
-            const calendarDays = document.getElementById('calendar-days');
-            const monthSelect = document.getElementById('month-select');
-            const yearSelect = document.getElementById('year-select');
-            const calendarTitle = document.getElementById('calendar-title');
-            let currentDate = new Date();
-            let events = [];
-
-            function updateCalendarTitle() {
-                const options = { month: 'long', year: 'numeric' };
-                calendarTitle.textContent = currentDate.toLocaleDateString('ru-RU', options);
-            }
-
-            function renderCalendar() {
-                const year = currentDate.getFullYear();
-                const month = currentDate.getMonth();
-                const firstDay = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                let daysHtml = '';
-
-                for (let i = 0; i < firstDay; i++) {
-                    daysHtml += '<div class="calendar-day other-month"></div>';
+                let truncatedContent = lines.slice(0, 5).join(' ');
+                if (lines.length > 5) {
+                    truncatedContent += '...';
                 }
+                content.innerHTML = truncatedContent;
 
-                const today = new Date();
-                for (let i = 1; i <= daysInMonth; i++) {
-                    const day = new Date(year, month, i);
-                    const dayString = day.toISOString().split('T')[0];
-                    const isToday = day.toDateString() === today.toDateString();
-                    const hasEvent = events.some(event => {
-                        const eventDate = new Date(event.date).toISOString().split('T')[0];
-                        return eventDate === dayString;
-                    });
+                newsContent.appendChild(title);
+                newsContent.appendChild(content);
+                newsCard.appendChild(newsContent);
+                newsContainer.appendChild(newsCard);
+            });
+        })
+        .catch(error => console.error('Ошибка загрузки новостей:', error));
 
-                    let dayClass = 'calendar-day';
-                    if (isToday) dayClass += ' today';
-                    if (hasEvent) dayClass += ' has-event';
-                    daysHtml += `<div class="${dayClass}" data-date="${dayString}" onclick="window.location.href='/measure?date=${dayString}'">${i}</div>`;
-                }
-                calendarDays.innerHTML = daysHtml;
-            }
+    // Открытие модального окна
+    function openModal(newsItem) {
+        document.getElementById('modalTitle').innerText = newsItem.title;
+        document.getElementById('modalContent').innerHTML = newsItem.description;
+        document.getElementById('modalImage').src = newsItem.imageURL;
+        document.getElementById('newsModal').style.display = 'flex';
+    }
 
-            function fetchEvents() {
-                fetch('/api/get_events')
-                    .then(response => response.json())
-                    .then(data => {
-                        events = data.events;
-                        renderCalendar();
-                    })
-                    .catch(error => console.error('Ошибка:', error));
-            }
+    // Закрытие модального окна
+    function closeModal() {
+        document.getElementById('newsModal').style.display = 'none';
+    }
 
-            monthSelect.addEventListener('change', function() {
-                currentDate.setMonth(parseInt(monthSelect.value));
-                updateCalendarTitle();
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        const modal = document.getElementById('newsModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    };
+
+    // Объявляем переменные для календаря
+    const calendarDays = document.getElementById('calendar-days');
+    const monthSelect = document.getElementById('month-select');
+    const yearSelect = document.getElementById('year-select');
+    const calendarTitle = document.getElementById('calendar-title');
+
+    let currentDate = new Date();
+    let events = []; // сюда будут загружаться даты из API
+
+    // Обновляем заголовок календаря
+    function updateCalendarTitle() {
+        const options = { month: 'long', year: 'numeric' };
+        calendarTitle.textContent = currentDate.toLocaleDateString('ru-RU', options);
+    }
+
+    // Генерируем календарь, показываем только даты с событиями
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // Определяем день недели первого дня месяца (понедельник = 1, воскресенье = 7)
+        let firstDay = new Date(year, month, 1).getDay();
+        if (firstDay === 0) { firstDay = 7; } // В JS воскресенье=0, делаем его 7
+
+        // Количество дней в текущем месяце
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let daysHtml = '';
+
+        // Создаем пустые ячейки для дней предыдущего месяца
+        for (let i = 1; i < firstDay; i++) {
+            daysHtml += '<div class="calendar-day other-month"></div>';
+        }
+
+        const today = new Date();
+
+        // Генерируем дни текущего месяца
+        for (let i = 1; i <= daysInMonth; i++) {
+            const day = new Date(year, month, i);
+            const dayStr = day.toISOString().split('T')[0]; // формат 'YYYY-MM-DD'
+            const isToday = day.toDateString() === today.toDateString();
+
+            // Проверяем наличие события на этот день
+            const hasEvent = events.some(event => event.date === dayStr);
+
+            let dayClass = 'calendar-day';
+            if (isToday) dayClass += ' today';
+            if (hasEvent) dayClass += ' has-event';
+
+            daysHtml += `<div class="${dayClass}" data-date="${dayStr}" onclick="window.location.href='/measure?date=${dayStr}'">${i}</div>`;
+        }
+
+        // Заполняем календарь
+        calendarDays.innerHTML = daysHtml;
+    }
+
+    // Загружаем события из API
+    function fetchEvents() {
+        fetch('/api/get_events')  // замените на ваш реальный эндпоинт
+            .then(res => res.json())
+            .then(data => {
+                // Предполагается, что API возвращает массив объектов с 'date' в формате 'YYYY-MM-DD'
+                events = data.events; // присваиваем массив дат
                 renderCalendar();
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке событий:', error);
             });
+    }
 
-            yearSelect.addEventListener('change', function() {
-                currentDate.setFullYear(parseInt(yearSelect.value));
-                updateCalendarTitle();
-                renderCalendar();
+    // Обработчики смены месяца и года
+    document.getElementById('month-select').addEventListener('change', () => {
+        currentDate.setMonth(parseInt(document.getElementById('month-select').value));
+        updateCalendarTitle();
+        renderCalendar();
+    });
+    document.getElementById('year-select').addEventListener('change', () => {
+        currentDate.setFullYear(parseInt(document.getElementById('year-select').value));
+        updateCalendarTitle();
+        renderCalendar();
+    });
+
+    // Инициализация
+    updateCalendarTitle();
+    fetchEvents();
+});
+    // Загрузка команд
+    fetch('/api/get_commands')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('#commands-table tbody');
+            tbody.innerHTML = '';
+            data.commands.slice(0, 10).forEach((cmd, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${index + 1}</td><td>${cmd.name}</td>`;
+                tbody.appendChild(tr);
             });
+        })
+        .catch(error => console.error('Ошибка загрузки команд:', error));
 
-            updateCalendarTitle();
-            fetchEvents();
-
-            fetch('/api/get_commands')
-                .then(response => response.json())
-                .then(data => {
-                    const tbody = document.querySelector('#commands-table tbody');
-                    tbody.innerHTML = '';
-                    data.commands.slice(0, 10).forEach((cmd, index) => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td>${index + 1}</td><td>${cmd.name}</td>`;
-                        tbody.appendChild(tr);
-                    });
-                })
-                .catch(error => console.error('Ошибка загрузки команд:', error));
-
-            document.getElementById('theme-toggle').addEventListener('click', function() {
-                document.body.classList.toggle('dark-theme');
-            });
-        });
+    // Переключение темы
+    document.getElementById('theme-toggle').addEventListener('click', function() {
+        document.body.classList.toggle('dark-theme');
+    });
     </script>
 </body>
 </html>

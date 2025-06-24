@@ -10,15 +10,39 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/dark theme.js') }}" defer></script>
     <style>
+        :root {
+            --primary-color: #5a0888;
+            --secondary-color: #6b2376;
+            --text-color: #ffffff;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --modal-background: #ffffff;
+        }
+
+        .dark-theme {
+            --primary-color: #bb86fc;
+            --secondary-color: #3700b3;
+            --background-color: #121212;
+            --card-background: #1e1e1e;
+            --modal-background: #1e1e1e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
         .container {
             display: flex;
             justify-content: space-between;
             width: 100%;
             padding: 20px;
-            margin-top: 20px;
             margin-bottom: 50px;
         }
 
@@ -137,13 +161,12 @@
         }
 
         footer {
-    text-align: center;
-    background-color: #dc3545; /* Такой же цвет, как у шапки */
-    color: white; /* Белый цвет текста */
-    padding: 10px 0;
-    height: 3%;
-}
-
+            text-align: center;
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 0;
+            height: 3%;
+        }
 
         .club-teams-header {
             width: 90%;
@@ -194,60 +217,95 @@
             margin: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: flex-end;
             font-size: 20px;
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             transition: background-color 0.3s, transform 0.3s;
             cursor: pointer;
-        }
-
-        .club-teams-section .team-card:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
+            position: relative;
+            overflow: hidden;
         }
 
         .club-teams-section .team-card h3 {
+            position: relative;
+            z-index: 1;
             margin: 10px 0;
-            flex-wrap: wrap;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .club-teams-section .team-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         .modal {
             display: none;
             position: fixed;
             z-index: 1;
-            padding-top: 100px;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.9);
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
-            margin: auto;
-            display: block;
-            width: 80%;
-            max-width: 700px;
+            background-color: var(--modal-background);
+            padding: 20px;
+            width: 90%;
+            max-width: 1200px;
+            height: auto;
+            max-height: 90vh;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            border: 10px solid var(--primary-color);
+            overflow-y: auto;
         }
 
-        .close {
+        .modal-text h2 {
+            color: var(--primary-color);
+            font-family: 'Georgia', serif;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .modal-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .modal-image img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 15px;
+            border: 3px solid var(--primary-color);
+            object-fit: contain;
+        }
+
+        .close-button {
+            color: #aaa;
             position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
             font-weight: bold;
-            transition: 0.3s;
+            cursor: pointer;
         }
 
-        .close:hover,
-        .close:focus {
-            color: #bbb;
-            text-decoration: none;
-            cursor: pointer;
+        .close-button:hover {
+            color: var(--primary-color);
         }
     </style>
 </head>
@@ -325,7 +383,6 @@
             </tbody>
         </table>
     </main>
-
     <section class="statistics-section">
         <h2 class="rating">Статистика</h2>
         <table class="statistics-table" id="commands-table">
@@ -345,62 +402,71 @@
 <div class="container">
     <section class="club-teams-section">
         <h2 class="club-teams-header">Сборные команды клуба</h2>
-
         <h3>Женские команды</h3>
         <div class="club-teams-row">
-            <div class="team-card" onclick="openModal('Женская баскетбольная команда')">
+            <div class="team-card" onclick="openModal('Женская баскетбольная команда', 'Описание женской баскетбольной команды')">
                 <h3>Женская баскетбольная команда</h3>
+                <img src="{{ url_for('static', filename='images/Женская баскетбольная команда.jpg') }}" alt="Женская баскетбольная команда">
             </div>
-            <div class="team-card" onclick="openModal('Женская футбольная команда')">
+            <div class="team-card" onclick="openModal('Женская футбольная команда', 'Описание женской футбольной команды')">
                 <h3>Женская футбольная команда</h3>
+                <img src="{{ url_for('static', filename='images/Женская футбольная команда.jpg') }}" alt="Женская футбольная команда">
             </div>
-            <div class="team-card" onclick="openModal('Женская волейбольная команда')">
+            <div class="team-card" onclick="openModal('Женская волейбольная команда', 'Описание женской волейбольной команды')">
                 <h3>Женская волейбольная команда</h3>
+                <img src="{{ url_for('static', filename='images/Женская волейбольная команда.jpg') }}" alt="Женская волейбольная команда">
             </div>
         </div>
-
         <h3>Мужские команды</h3>
         <div class="club-teams-row">
-            <div class="team-card" onclick="openModal('Мужская баскетбольная команда')">
+            <div class="team-card" onclick="openModal('Мужская баскетбольная команда', 'Описание мужской баскетбольной команды')">
                 <h3>Мужская баскетбольная команда</h3>
+                <img src="{{ url_for('static', filename='images/Мужская баскетбольная команда.jpg') }}" alt="Мужская баскетбольная команда">
             </div>
-            <div class="team-card" onclick="openModal('Мужская футбольная команда')">
+            <div class="team-card" onclick="openModal('Мужская футбольная команда', 'Описание мужской футбольной команды')">
                 <h3>Мужская футбольная команда</h3>
+                <img src="{{ url_for('static', filename='images/Мужская футбольная команда.jpg') }}" alt="Мужская футбольная команда">
             </div>
-            <div class="team-card" onclick="openModal('Мужская волейбольная команда')">
+            <div class="team-card" onclick="openModal('Мужская волейбольная команда', 'Описание мужской волейбольной команды')">
                 <h3>Мужская волейбольная команда</h3>
+                <img src="{{ url_for('static', filename='images/Мужская волейбольная команда.jpg') }}" alt="Мужская волейбольная команда">
             </div>
         </div>
     </section>
 </div>
 
 <div id="myModal" class="modal">
-    <span class="close">&times;</span>
-    <img class="modal-content" id="modalImage">
-    <div id="caption"></div>
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <div class="modal-text">
+            <h2 id="modalTitle"></h2>
+        </div>
+        <div class="modal-image">
+            <img id="modalImage" src="" alt="Image">
+        </div>
+    </div>
 </div>
 
 <footer>
-        <p>© А.И.Морозова Все права защищены, 2025.</p>
-    </footer>
+    <p>© А.И.Морозова Все права защищены, 2025.</p>
+</footer>
 
 <script>
-function openModal(teamName) {
-    document.getElementById('myModal').style.display = "block";
-    document.getElementById('modalImage').src = "path_to_image/" + teamName + ".jpg";
-    document.getElementById('caption').innerHTML = teamName;
+function openModal(teamName, teamDescription) {
+    document.getElementById('myModal').style.display = "flex";
+    document.getElementById('modalImage').src = "{{ url_for('static', filename='images/') }}" + teamName + ".jpg";
+    document.getElementById('modalTitle').innerText = teamName;
+    document.getElementById('modalContent').innerText = teamDescription;
 }
 
-var modal = document.getElementById('myModal');
-var span = document.getElementsByClassName("close")[0];
-
-span.onclick = function() {
-    modal.style.display = "none";
+function closeModal() {
+    document.getElementById('myModal').style.display = 'none';
 }
 
 window.onclick = function(event) {
+    const modal = document.getElementById('myModal');
     if (event.target == modal) {
-        modal.style.display = "none";
+        closeModal();
     }
 }
 

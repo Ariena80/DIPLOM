@@ -22,6 +22,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            padding-bottom: 50px; /* или более, в зависимости от высоты футера */
         }
         .main-container {
             display: flex;
@@ -188,31 +189,17 @@
             color: white;
             font-weight: bold;
         }
-            footer {
+        footer {
+        position: fixed; /* Зафиксировать футер в окне */
+        bottom: 0; /* Расположить у нижнего края окна */
+        width: 100%; /* Занять всю ширину */
         text-align: center;
         background-color: #dc3545; /* Такой же цвет, как у шапки */
         color: white; /* Белый цвет текста */
         padding: 10px 0;
         height: 3%;
-        }       
-
-        /* Расписание тренировок */
-        .schedule-table {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-            border-collapse: collapse;
-        }
-        .schedule-table th,
-        .schedule-table td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-        .schedule-table thead {
-            background-color: #f0e6f6;
-        }
-
+        z-index: 1000; /* Убедитесь, что футер поверх другого контента */
+    }
         /* Модальное окно */
         .modal {
             display: none;
@@ -329,60 +316,6 @@
         <div class="calendar-days" id="calendar-days"></div>
     </section>
 </div>
-
-    <!-- Расписание тренировок и календарь -->
-    <div style="display: flex; flex-direction: column; align-items: center; flex:1;">
-        <!-- Расписание тренировок -->
-        <div class="measure-container training-schedule" style="width: 100%; max-width: 600px;">
-            <h2 style="text-align: center;">Расписание тренировок</h2>
-            <table class="schedule-table">
-                <thead>
-                    <tr>
-                        <th>День</th>
-                        <th>Спорт</th>
-                        <th>Время</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Пн</td>
-                        <td>Футбол</td>
-                        <td>18:00–20:00</td>
-                    </tr>
-                    <tr>
-                        <td>Вт</td>
-                        <td>Баскетбол</td>
-                        <td>16:00–18:00</td>
-                    </tr>
-                    <tr>
-                        <td>Ср</td>
-                        <td>Волейбол</td>
-                        <td>19:00–21:00</td>
-                    </tr>
-                    <tr>
-                        <td>Чт</td>
-                        <td>Волейбол</td>
-                        <td>17:00–19:00</td>
-                    </tr>
-                    <tr>
-                        <td>Пт</td>
-                        <td>Футбол</td>
-                        <td>17:30–19:30</td>
-                    </tr>
-                    <tr>
-                        <td>Сб</td>
-                        <td>Баскетбол</td>
-                        <td>10:00–12:00</td>
-                    </tr>
-                    <tr>
-                        <td>Вс</td>
-                        <td>Отдых</td>
-                        <td>—</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
 <!-- Модальное окно -->
 <div id="eventModal" class="modal">
     <div class="modal-content">
