@@ -15,6 +15,7 @@ import io
 import os
 from functools import wraps
 from flask_migrate import Migrate
+from docx import Document
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://@DESKTOP-VF9RI0P\SQLEXPRESS/REDWOLFS?driver=ODBC+Driver+17+for+SQL+Server'
@@ -586,6 +587,8 @@ def reject_request(request_id):
 @app.route('/api/add_event', methods=['POST'])
 def add_event():
     data = request.form
+    event_image = request.files.get('event_image')
+
     required_fields = ['event_type', 'event_name', 'sport_type', 'description', 'event_date', 'event_time', 'location']
 
     if all(field in data for field in required_fields):
@@ -599,6 +602,16 @@ def add_event():
             if existing_event:
                 return jsonify({'success': False, 'message': 'Мероприятие с таким названием и датой уже существует.'}), 400
 
+            image_path = None
+            if event_image and event_image.filename != '':
+                if not os.path.exists('static/event'):
+                    os.makedirs('static/event')
+
+                unique_filename = f"event_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.jpg"
+                save_path = os.path.join('static/event', unique_filename)
+                event_image.save(save_path)
+                image_path = f"static/event/{unique_filename}"
+
             new_event = Event(
                 name=data['event_name'],
                 date=datetime.strptime(data['event_date'], '%Y-%m-%d').date(),
@@ -606,7 +619,8 @@ def add_event():
                 sportTypeID=int(data['sport_type']),
                 time=datetime.strptime(data['event_time'], '%H:%M').time(),
                 eventTypeID=int(data['event_type']),
-                placeID=int(data['location'])
+                placeID=int(data['location']),
+                imageURL=image_path
             )
 
             db.session.add(new_event)
@@ -619,6 +633,7 @@ def add_event():
             return jsonify({'success': False, 'message': str(e)}), 500
     else:
         return jsonify({'success': False, 'message': 'Отсутствуют обязательные поля'}), 400
+
 
 @app.route('/api/get_events', methods=['GET'])
 def get_events():
@@ -791,13 +806,21 @@ def add_award_route():
 def delete_award():
     data = request.get_json()
     award_id = data.get('id')
-    award = Award.query.get(award_id)
-    if award:
-        db.session.delete(award)
-        db.session.commit()
-        return jsonify({"success": True, "message": "Награда успешно удалена"})
-    else:
-        return jsonify({"success": False, "message": "Награда не найдена"})
+
+    if not award_id:
+        return jsonify({"success": False, "message": "ID награды не предоставлен"}), 400
+
+    try:
+        award = Award.query.get(award_id)
+        if award:
+            db.session.delete(award)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Награда успешно удалена"})
+        else:
+            return jsonify({"success": False, "message": "Награда не найдена"}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Ошибка при удалении награды: {str(e)}"}), 500
 
 @app.route('/api/update_statistics', methods=['POST'])
 def update_statistics():
@@ -853,7 +876,11 @@ def get_physorgs():
 @app.route('/api/get_awards', methods=['GET'])
 def get_awards():
     awards = Award.query.all()
-    awards_list = [{'id': award.id, 'name': award.name} for award in awards]
+    awards_list = [{
+        'id': award.id,
+        'name': award.name,
+        'imageURL': award.imageURL
+    } for award in awards]
     return jsonify({'awards': awards_list})
 
 @app.route('/upload.php', methods=['POST'])
@@ -888,25 +915,65 @@ def upload_media():
 def delete_physorg():
     data = request.get_json()
     physorg_id = data.get('id')
-    physorg = User.query.get(physorg_id)
+
+    if not physorg_id:
+        return jsonify({"success": False, "message": "ID физорга не предоставлен"}), 400
+
+    physorg = db.session.get(User, physorg_id)
     if physorg:
-        db.session.delete(physorg)
-        db.session.commit()
-        return jsonify({"success": True, "message": "Физорг успешно удален"})
+        try:
+            db.session.delete(physorg)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Физорг успешно удален"})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "message": f"Ошибка при удалении физорга: {str(e)}"}), 500
     else:
-        return jsonify({"success": False, "message": "Физорг не найден"})
+        return jsonify({"success": False, "message": "Физорг не найден"}), 404
 
 @app.route('/api/delete_team', methods=['POST'])
 def delete_team():
     data = request.get_json()
     team_id = data.get('id')
-    team = Command.query.get(team_id)
-    if team:
-        db.session.delete(team)
-        db.session.commit()
-        return jsonify({"success": True, "message": "Команда успешно удалена"})
-    else:
-        return jsonify({"success": False, "message": "Команда не найдена"})
+
+    if not team_id:
+        return jsonify({"success": False, "message": "ID команды не предоставлен"}), 400
+
+    try:
+        # Начинаем транзакцию
+        # Удаляем связанные записи из TeamStatistics
+        TeamStatistics.query.filter_by(commandID=team_id).delete()
+
+        # Удаляем команду из Command
+        team = db.session.get(Command, team_id)
+        if team:
+            db.session.delete(team)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Команда и её статистика успешно удалены"})
+        else:
+            return jsonify({"success": False, "message": "Команда не найдена"}), 404
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Ошибка при удалении команды: {str(e)}")
+        return jsonify({"success": False, "message": f"Ошибка при удалении команды: {str(e)}"}), 500
+
+@app.route('/api/generate_docx', methods=['POST'])
+def generate_docx():
+    data = request.get_json()
+    order_text = data.get('orderText', '')
+
+    if not order_text:
+        return jsonify({'error': 'Текст распоряжения пуст'}), 400
+
+    doc = Document()
+    doc.add_paragraph(order_text)
+
+    # Сохраняем документ в памяти
+    docx_buffer = BytesIO()
+    doc.save(docx_buffer)
+    docx_buffer.seek(0)
+
+    return send_file(docx_buffer, as_attachment=True, download_name='Распоряжение.docx', mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 if __name__ == '__main__':
     if os.getenv('FLASK_ENV') != 'testing':
